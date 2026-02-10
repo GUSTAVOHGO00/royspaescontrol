@@ -10,308 +10,87 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <script>
-    // Configura o trabalhador do PDF.js imediatamente
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 </script>
 
 <style>
-  :root {
-    --red: #E30613;       /* Vermelho Roy's */
-    --yellow: #FFC20E;    /* Amarelo Roy's */
-    --blue: #005C9F;      /* Azul Roy's */
-    --bg: #F4F7FA;
-    --card: #FFFFFF;
-    --text: #1A202C;
-    --gray: #A0AEC0;
-  }
-
+  :root { --red: #E30613; --yellow: #FFC20E; --blue: #005C9F; --bg: #F4F7FA; --card: #FFFFFF; --text: #1A202C; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background-color: var(--bg);
-    color: var(--text);
-    padding-bottom: 90px;
-    -webkit-font-smoothing: antialiased;
-  }
-
-  /* --- CABEÇALHO --- */
-  .header {
-    background: white;
-    padding: 15px 20px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
+  body { font-family: 'DM Sans', sans-serif; background-color: var(--bg); color: var(--text); padding-bottom: 90px; }
   
-  .logo-container {
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
+  .header { background: white; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 15px; }
+  .logo-img { height: 40px; width: auto; }
+  .container { padding: 20px; max-width: 500px; margin: 0 auto; }
+  .card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); border: 1px solid #EDF2F7; }
+  h2 { font-size: 14px; text-transform: uppercase; color: #A0AEC0; font-weight: 700; margin-bottom: 12px; }
   
-  .logo-img {
-    max-height: 100%;
-    max-width: 100%;
-    object-fit: contain;
-  }
-
-  .header-titles h1 {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--red);
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .header-titles p {
-    font-size: 12px;
-    color: var(--blue);
-    font-weight: 500;
-  }
-
-  /* --- LAYOUT --- */
-  .container {
-    padding: 20px;
-    max-width: 500px;
-    margin: 0 auto;
-  }
-
-  .card {
-    background: var(--card);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    border: 1px solid #EDF2F7;
-  }
-
-  h2 {
-    font-size: 14px;
-    text-transform: uppercase;
-    color: var(--gray);
-    letter-spacing: 1px;
-    margin-bottom: 12px;
-    font-weight: 700;
-  }
-
-  /* --- INPUTS --- */
   .form-group { margin-bottom: 15px; }
   label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: #4A5568; }
+  input, select { width: 100%; padding: 12px; border: 2px solid #E2E8F0; border-radius: 12px; font-size: 16px; background: #FAFAFA; }
   
-  input[type="text"], input[type="number"], input[type="date"], select {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #E2E8F0;
-    border-radius: 12px;
-    font-size: 16px;
-    font-family: inherit;
-    background: #FAFAFA;
-    transition: all 0.2s;
-  }
-  input:focus, select:focus {
-    outline: none;
-    border-color: var(--blue);
-    background: white;
-  }
+  .bread-row { background: #F7FAFC; border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid #EDF2F7; }
+  .bread-row-top { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; }
+  .bread-equiv { font-size: 12px; background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; }
+  .bread-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: center; }
+  .bread-inputs span { font-size: 10px; color: #A0AEC0; font-weight: 700; display: block; margin-bottom: 4px; }
 
-  /* --- CONTROLE DE PÃES (30 vs 15) --- */
-  .bread-row {
-    background: #F7FAFC;
-    border-radius: 12px;
-    padding: 12px;
-    margin-bottom: 10px;
-    border: 1px solid #EDF2F7;
-  }
-  .bread-row-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-  .bread-label { font-weight: 700; font-size: 15px; color: var(--text); }
-  .bread-equiv {
-    font-size: 12px;
-    background: var(--blue);
-    color: white;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: 700;
-  }
-
-  .bread-inputs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  .bread-col { text-align: center; }
-  .bread-col span { display: block; font-size: 10px; color: var(--gray); margin-bottom: 4px; font-weight: 700; }
-
-  /* --- BOTÕES --- */
-  .btn {
-    width: 100%;
-    padding: 16px;
-    border: none;
-    border-radius: 14px;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: transform 0.1s;
-  }
-  .btn:active { transform: scale(0.98); }
-  
-  .btn-primary { background: var(--red); color: white; box-shadow: 0 4px 15px rgba(227, 6, 19, 0.3); }
+  .btn { width: 100%; padding: 16px; border: none; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+  .btn-primary { background: var(--red); color: white; }
   .btn-secondary { background: white; border: 2px solid #E2E8F0; color: var(--text); }
-  .btn-camera { background: var(--text); color: white; margin-bottom: 10px; }
+  .btn-camera { background: #2D3748; color: white; }
 
-  /* --- SEMÁFORO --- */
-  .result-card {
-    text-align: center;
-    padding: 30px 20px;
-    border-radius: 20px;
-    color: white;
-    margin-top: 20px;
-  }
-  .status-verde { background: linear-gradient(135deg, #48BB78, #38A169); box-shadow: 0 10px 20px rgba(72, 187, 120, 0.3); }
-  .status-amarelo { background: linear-gradient(135deg, #ECC94B, #D69E2E); box-shadow: 0 10px 20px rgba(236, 201, 75, 0.3); color: #333; }
-  .status-vermelho { background: linear-gradient(135deg, #F56565, #C53030); box-shadow: 0 10px 20px rgba(245, 101, 101, 0.3); }
-
-  .result-icon { font-size: 48px; margin-bottom: 10px; }
-  .result-value { font-size: 36px; font-weight: 800; }
-  .result-desc { font-size: 16px; opacity: 0.9; margin-top: 5px; }
-
-  /* --- FAB --- */
-  .fab {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    width: 64px;
-    height: 64px;
-    background: var(--red);
-    color: white;
-    border-radius: 50%;
-    border: none;
-    font-size: 32px;
-    box-shadow: 0 8px 20px rgba(227, 6, 19, 0.4);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 200;
-  }
-
-  /* --- UTILITÁRIOS --- */
+  .result-card { text-align: center; padding: 30px 20px; border-radius: 20px; color: white; margin-top: 20px; }
+  .status-verde { background: linear-gradient(135deg, #48BB78, #38A169); }
+  .status-amarelo { background: linear-gradient(135deg, #ECC94B, #D69E2E); color: #333; }
+  .status-vermelho { background: linear-gradient(135deg, #F56565, #C53030); }
+  
+  .fab { position: fixed; bottom: 24px; right: 24px; width: 64px; height: 64px; background: var(--red); color: white; border-radius: 50%; border: none; font-size: 32px; box-shadow: 0 8px 20px rgba(227, 6, 19, 0.4); cursor: pointer; z-index: 200; }
   .hidden { display: none !important; }
   .loading { text-align: center; padding: 20px; display: none; }
-  .spinner {
-    width: 30px; height: 30px; border: 3px solid #E2E8F0;
-    border-top: 3px solid var(--blue); border-radius: 50%;
-    animation: spin 1s infinite linear; margin: 0 auto 10px;
-  }
+  .spinner { width: 30px; height: 30px; border: 3px solid #E2E8F0; border-top: 3px solid var(--blue); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 10px; }
   @keyframes spin { 100% { transform: rotate(360deg); } }
 
-  /* Histórico */
-  .history-item {
-    background: white;
-    padding: 16px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    border-left: 5px solid #CBD5E0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-  }
-  .history-date { font-size: 12px; color: var(--gray); font-weight: 700; text-transform: uppercase; }
-  .history-info { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
-  .history-unit { font-weight: 700; color: var(--text); }
+  .history-item { background: white; padding: 16px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #CBD5E0; }
   .tag { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; }
   .tag-ok { background: #C6F6D5; color: #22543D; }
   .tag-erro { background: #FED7D7; color: #822727; }
-
 </style>
 </head>
 <body>
 
 <div id="screen-list">
   <div class="header">
-    <div class="logo-container">
-      <img src="logo.png" class="logo-img" alt="Logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block'">
-      <span style="display:none; font-size:30px;">🥪</span>
-    </div>
-    <div class="header-titles">
-      <h1>Roy's</h1>
-      <p>Controle de Fechamento</p>
+    <img src="logo.png" class="logo-img" onerror="this.style.display='none'">
+    <div style="margin-left:10px">
+      <h1 style="font-size:20px;color:var(--red);font-weight:700">Roy's</h1>
+      <p style="font-size:12px;color:var(--blue)">Controle de Fechamento</p>
     </div>
   </div>
-
   <div class="container">
-    <h2 style="margin-top:10px">Histórico Recente</h2>
-    <div id="history-container">
-      <div style="text-align:center; padding:40px; color:#A0AEC0;">
-        <div style="font-size:40px; margin-bottom:10px">📂</div>
-        Nenhum fechamento registrado.
-      </div>
-    </div>
+    <h2 style="margin-top:10px">Histórico</h2>
+    <div id="history-container"><div style="text-align:center; padding:40px; color:#A0AEC0;">📂 Nenhum registro.</div></div>
   </div>
-
   <button class="fab" onclick="navTo('screen-new')">+</button>
 </div>
 
 <div id="screen-new" class="hidden">
   <div class="header">
-    <button onclick="navTo('screen-list')" style="background:none;border:none;font-size:24px;color:var(--text);margin-right:10px">←</button>
-    <div class="header-titles">
-      <h1>Novo Fechamento</h1>
-      <p>Preencha os dados abaixo</p>
-    </div>
+    <button onclick="navTo('screen-list')" style="background:none;border:none;font-size:24px;margin-right:10px">←</button>
+    <h1>Novo Fechamento</h1>
   </div>
 
   <div class="container">
-    
     <div class="card">
       <h2>1. Dados Gerais</h2>
-      
-      <div class="form-group">
-        <label>Data</label>
-        <input type="date" id="inp-data">
-      </div>
-
-      <div class="form-group">
-        <label>Turno</label>
-        <select id="inp-turno">
-          <option>Manhã</option>
-          <option>Tarde</option>
-          <option>Noite</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Unidade</label>
-        <select id="inp-unidade">
-          <option>Shopping da Ilha</option>
-          <option>Rio Anil</option>
-          <option>Golden Shopping</option>
-          <option>Outra</option>
-        </select>
-      </div>
-      
-      <div class="form-group">
-        <label>Responsável</label>
-        <input type="text" id="inp-resp" placeholder="Nome do Gerente">
-      </div>
+      <div class="form-group"><label>Data</label><input type="date" id="inp-data"></div>
+      <div class="form-group"><label>Turno</label><select id="inp-turno"><option>Manhã</option><option>Tarde</option><option>Noite</option></select></div>
+      <div class="form-group"><label>Unidade</label><select id="inp-unidade"><option>Shopping da Ilha</option><option>Rio Anil</option><option>Golden Shopping</option><option>Outra</option></select></div>
+      <div class="form-group"><label>Responsável</label><input type="text" id="inp-resp"></div>
     </div>
 
     <div class="card">
-      <h2>2. Contagem Manual (Estoque)</h2>
+      <h2>2. Contagem Manual</h2>
       <div id="manual-inputs"></div>
-      
       <div style="margin-top:15px; background:#EBF8FF; color:#2B6CB0; padding:15px; border-radius:12px; text-align:center; font-weight:700;">
         Total Utilizados: <span id="manual-total" style="font-size:20px">0</span> eq.
       </div>
@@ -319,27 +98,18 @@
 
     <div class="card">
       <h2>3. Leitura do Sistema</h2>
-      <p style="font-size:13px; color:#718096; margin-bottom:15px;">
-        Selecione o <b>PDF do fechamento</b> ou tire uma foto do cupom.
-      </p>
-      
+      <p style="font-size:13px; color:#718096; margin-bottom:15px;">Dica: Prefira PDF para leitura exata.</p>
       <input type="file" id="camera-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)">
-      
-      <button class="btn btn-camera" onclick="document.getElementById('camera-input').click()">
-        📁 Abrir PDF ou 📸 Foto
-      </button>
+      <button class="btn btn-camera" onclick="document.getElementById('camera-input').click()">📁 Abrir PDF ou 📸 Foto</button>
 
-      <div id="ocr-loading" class="loading">
-        <div class="spinner"></div>
-        <span id="loading-text">Processando arquivo...</span>
-      </div>
+      <div id="ocr-loading" class="loading"><div class="spinner"></div><span id="loading-text">Analisando Arquivo...</span></div>
 
       <div id="ocr-result" class="hidden">
         <div class="form-group" style="margin-top:10px">
           <label>Total Sistema (Pães 30cm)</label>
           <input type="number" id="inp-sistema" style="font-size:24px; color:var(--red); font-weight:700;" placeholder="0">
         </div>
-        <textarea id="ocr-debug" style="width:100%; height:60px; font-size:10px; margin-top:10px; border:1px solid #eee; color:#ccc;" readonly placeholder="Texto detectado aparecerá aqui..."></textarea>
+        <textarea id="ocr-debug" style="width:100%; height:80px; font-size:10px; margin-top:10px; border:1px solid #eee; color:#999;" readonly></textarea>
       </div>
     </div>
 
@@ -347,293 +117,168 @@
 
     <div id="result-area" class="hidden">
       <div id="traffic-light" class="result-card">
-        <div class="result-icon" id="res-icon">✅</div>
-        <div class="result-value" id="res-diff">0</div>
-        <div class="result-desc" id="res-desc">Sem diferença</div>
+        <div style="font-size:48px; margin-bottom:10px" id="res-icon">✅</div>
+        <div style="font-size:36px; font-weight:800" id="res-diff">0</div>
+        <div style="font-size:16px; opacity:0.9" id="res-desc">Sem diferença</div>
       </div>
-
       <div class="card" style="margin-top:20px">
-        <label>Justificativa (Obrigatória se houver erro)</label>
-        <input type="text" id="inp-just" placeholder="Explique o motivo...">
+        <label>Justificativa</label>
+        <input type="text" id="inp-just">
       </div>
-
-      <button class="btn btn-secondary" onclick="salvar()">💾 SALVAR NO HISTÓRICO</button>
+      <button class="btn btn-secondary" onclick="salvar()">💾 SALVAR</button>
     </div>
-
     <div style="height:60px"></div>
   </div>
 </div>
 
 <script>
-// --- LÓGICA DO APP ---
-
-const CATEGORIAS = [
-  {id: 'abertura', label: 'A) Abertura'},
-  {id: 'assados', label: 'B) Assados/Produzidos'},
-  {id: 'desperdicio', label: 'C) Desperdícios'},
-  {id: 'cortesia', label: 'D) Cortesias'},
-  {id: 'sobra', label: 'E) Sobra Final'}
-];
-
+const CATEGORIAS = [{id:'abertura',label:'A) Abertura'},{id:'assados',label:'B) Assados/Produzidos'},{id:'desperdicio',label:'C) Desperdícios'},{id:'cortesia',label:'D) Cortesias'},{id:'sobra',label:'E) Sobra Final'}];
 let dadosManual = {};
 
-// Inicialização
-window.onload = () => {
-  gerarInputsManual();
-  carregarHistorico();
-  document.getElementById('inp-data').valueAsDate = new Date();
-}
+window.onload = () => { gerarInputsManual(); carregarHistorico(); document.getElementById('inp-data').valueAsDate = new Date(); }
+function navTo(id) { document.querySelectorAll('body>div').forEach(d=>d.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); if(id=='screen-new') resetarForm(); }
 
-function navTo(screenId) {
-  document.querySelectorAll('body > div').forEach(d => d.classList.add('hidden'));
-  document.getElementById(screenId).classList.remove('hidden');
-  if(screenId === 'screen-new') resetarForm();
-}
-
-// Gera campos manuais
 function gerarInputsManual() {
-  const container = document.getElementById('manual-inputs');
-  container.innerHTML = '';
-  
+  const c = document.getElementById('manual-inputs'); c.innerHTML='';
   CATEGORIAS.forEach(cat => {
-    dadosManual[cat.id] = {q30:0, q15:0};
-    container.innerHTML += `
-      <div class="bread-row">
-        <div class="bread-row-top">
-          <span class="bread-label">${cat.label}</span>
-          <span class="bread-equiv" id="equiv-${cat.id}">0 eq.</span>
-        </div>
-        <div class="bread-inputs">
-          <div class="bread-col">
-            <span>30 CM (1.0)</span>
-            <input type="number" pattern="[0-9]*" inputmode="numeric" placeholder="0" 
-                   oninput="atualizarManual('${cat.id}', 'q30', this.value)">
-          </div>
-          <div class="bread-col">
-            <span>15 CM (0.5)</span>
-            <input type="number" pattern="[0-9]*" inputmode="numeric" placeholder="0" 
-                   oninput="atualizarManual('${cat.id}', 'q15', this.value)">
-          </div>
-        </div>
-      </div>
-    `;
+    dadosManual[cat.id]={q30:0,q15:0};
+    c.innerHTML+=`<div class="bread-row"><div class="bread-row-top"><span>${cat.label}</span><span class="bread-equiv" id="equiv-${cat.id}">0 eq.</span></div><div class="bread-inputs"><div><span>30 CM</span><input type="number" placeholder="0" oninput="updManual('${cat.id}','q30',this.value)"></div><div><span>15 CM</span><input type="number" placeholder="0" oninput="updManual('${cat.id}','q15',this.value)"></div></div></div>`;
   });
 }
-
-function atualizarManual(id, tipo, valor) {
-  dadosManual[id][tipo] = parseInt(valor) || 0;
-  
-  // Cálculo Eq
-  const eq = dadosManual[id].q30 + (dadosManual[id].q15 * 0.5);
-  document.getElementById(`equiv-${id}`).innerText = eq + " eq.";
-  
-  // Fórmula: A + B - C - D - E
-  const calc = (cid) => dadosManual[cid].q30 + (dadosManual[cid].q15 * 0.5);
-  const total = calc('abertura') + calc('assados') - calc('desperdicio') - calc('cortesia') - calc('sobra');
-  
-  document.getElementById('manual-total').innerText = total;
+function updManual(id,t,v) {
+  dadosManual[id][t]=parseInt(v)||0;
+  document.getElementById(`equiv-${id}`).innerText = (dadosManual[id].q30 + dadosManual[id].q15*0.5) + " eq.";
+  const calc=(i)=>dadosManual[i].q30+dadosManual[i].q15*0.5;
+  document.getElementById('manual-total').innerText = calc('abertura')+calc('assados')-calc('desperdicio')-calc('cortesia')-calc('sobra');
 }
 
-// --- PROCESSADOR HÍBRIDO (PDF e FOTO) ---
-async function processarArquivo(input) {
-  if(!input.files[0]) return;
-  const file = input.files[0];
-  
-  const loading = document.getElementById('ocr-loading');
-  const loadingText = document.getElementById('loading-text');
-  const resultDiv = document.getElementById('ocr-result');
-  
-  loading.style.display = 'block';
-  resultDiv.classList.add('hidden');
-  
+async function processarArquivo(inp) {
+  if(!inp.files[0]) return;
+  document.getElementById('ocr-loading').style.display='block';
+  document.getElementById('ocr-result').classList.add('hidden');
   try {
-    let textoExtraido = "";
-
-    // MODO PDF
-    if (file.type === 'application/pdf') {
-      loadingText.innerText = "Lendo PDF digital (100% Preciso)...";
-      textoExtraido = await lerPDF(file);
-    } 
-    // MODO FOTO
-    else {
-      loadingText.innerText = "Lendo Imagem com IA...";
-      textoExtraido = await lerImagemComOCR(file);
-    }
-    
-    // Parser
-    const valorSistema = analisarTexto(textoExtraido);
-    
-    document.getElementById('inp-sistema').value = valorSistema;
-    document.getElementById('ocr-debug').value = textoExtraido;
-    resultDiv.classList.remove('hidden');
-    
-  } catch (err) {
-    console.error(err);
-    alert('Erro ao processar arquivo. Tente novamente ou digite manualmente.');
-  } finally {
-    loading.style.display = 'none';
-  }
+    let txt = inp.files[0].type=='application/pdf' ? await lerPDF(inp.files[0]) : await lerImagem(inp.files[0]);
+    document.getElementById('ocr-debug').value = txt; 
+    document.getElementById('inp-sistema').value = analisarTextoMultiLinha(txt);
+    document.getElementById('ocr-result').classList.remove('hidden');
+  } catch(e){ console.log(e); alert('Erro. Tente manual.'); }
+  finally { document.getElementById('ocr-loading').style.display='none'; }
 }
 
-// Função: Ler PDF
-async function lerPDF(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  // Usa a biblioteca global
-  const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
-  let fullText = "";
-
-  for (let i = 1; i <= pdf.numPages; i++) {
+async function lerPDF(f) {
+  const pdf = await pdfjsLib.getDocument(await f.arrayBuffer()).promise;
+  let t = ""; 
+  for(let i=1;i<=pdf.numPages;i++) {
     const page = await pdf.getPage(i);
-    const textContent = await page.getTextContent();
-    // Junta as palavras com espaço
-    const pageText = textContent.items.map(item => item.str).join(" ");
-    fullText += pageText + "\n";
+    const content = await page.getTextContent();
+    // Pulo do gato: Junta com quebra de linha para manter estrutura
+    t += content.items.map(s=>s.str).join("\n") + "\n"; 
   }
-  return fullText;
+  return t;
+}
+async function lerImagem(f) {
+  const w = await Tesseract.createWorker('por');
+  const {data:{text}} = await w.recognize(f);
+  await w.terminate(); return text;
 }
 
-// Função: Ler Imagem (OCR)
-async function lerImagemComOCR(file) {
-  const worker = await Tesseract.createWorker('por');
-  const { data: { text } } = await worker.recognize(file);
-  await worker.terminate();
-  return text;
-}
-
-// CÉREBRO DO SISTEMA (Regras de Negócio)
-function analisarTexto(texto) {
-  // Padroniza o texto
-  const linhas = texto.toUpperCase().replace(/\r/g, '').split('\n');
+// --- CÉREBRO 4.0 (RASTREADOR MULTI-LINHA) ---
+function analisarTextoMultiLinha(texto) {
+  const linhas = texto.toUpperCase().split('\n');
   let total = 0;
   
-  // Regex para achar quantidade (evita confundir com preço)
-  // Procura numero no final da linha OU numero antes de um preço (ex: 2  29,90)
-  const regexQuantidade = /(\d+)\s*$/; 
-  const regexPrecoQtd = /(\d+)\s+[\d,.]+$/; 
+  for (let i = 0; i < linhas.length; i++) {
+    let l = linhas[i].trim();
+    if (l.length < 3) continue;
 
-  linhas.forEach(linha => {
-    let qtd = 0;
-    const match = linha.match(regexQuantidade) || linha.match(regexPrecoQtd);
+    // 1. Identifica se é um sanduíche válido
+    let fator = 0;
+    // Pão 15cm (0.5)
+    if (l.includes('SMART') || l.includes('15CM') || l.includes('ROYS FDS') || l.includes('PRA VALER') || l.includes('FRESH')) fator = 0.5;
+    // Pão 30cm (1.0)
+    else if (l.includes('SUPER') || l.includes('30CM') || l.includes('DOUBLE') || l.includes('CRISPY') || l.includes('CREAM') || l.includes('ROYS FRANGO')) fator = 1.0;
+    // Pão Grande (2.0)
+    else if (l.includes('BIG KING') || l.includes('MEGA') || l.includes('TRIO')) fator = 2.0;
     
-    if(match) {
-      qtd = parseInt(match[1]);
-    } else {
-      // Se a linha for só um número (comum em PDF que quebra linha)
-      if (/^\d+$/.test(linha.trim())) qtd = parseInt(linha.trim());
-    }
+    // Filtro extra: precisa ter ROYS ou COMBO ou nome de sanduíche
+    if (fator > 0 && (l.includes('ROYS') || l.includes('COMBO') || l.includes('SMASH') || l.includes('KING'))) {
+      
+      // 2. Tenta achar a quantidade NA MESMA LINHA
+      // Procura: numero pequeno (1-50) seguido de espaço e numero grande (preço)
+      // Ex: "4 69,60"
+      let match = l.match(/(\d+)\s+[\d.,]{3,}/);
+      let qtd = 0;
 
-    if (qtd > 0 && qtd < 1000) { // Trava de segurança para não ler ano 2024 como qtd
-      // Regras de conversão
-      if (linha.includes('SMART') || linha.includes('15CM') || linha.includes('ROYS FDS') || linha.includes('PRA VALER')) {
-        total += qtd * 0.5;
-      } else if (linha.includes('SUPER') || linha.includes('30CM') || linha.includes('DOUBLE')) {
-        total += qtd * 1.0;
-      } else if (linha.includes('BIG KING') || linha.includes('MEGA') || linha.includes('TRIO')) {
-        total += qtd * 2.0; 
+      if (match) {
+        qtd = parseInt(match[1]);
+      } else {
+        // 3. Se não achou, OLHA A PRÓXIMA LINHA (comum em PDF)
+        // Às vezes a quantidade cai pra linha de baixo sozinha
+        if (i + 1 < linhas.length) {
+            let proxLinha = linhas[i+1].trim();
+            // Verifica se a próxima linha é SÓ um número (ex: "4")
+            if (/^\d+$/.test(proxLinha)) {
+                qtd = parseInt(proxLinha);
+            }
+        }
+      }
+
+      // TRAVA DE SEGURANÇA:
+      // Ignora se o número for código de produto (ex: 158, 305)
+      // Assume que ninguém pede mais de 60 sanduíches iguais num cupom
+      if (qtd > 0 && qtd < 60) {
+         // Verifica se a linha começa com esse numero (pode ser código)
+         // Se a linha começa com "158" e a qtd achada for 158, ignora.
+         if (!l.startsWith(qtd.toString())) {
+             total += qtd * fator;
+         } else {
+             // Se achou no meio ou fim, aceita
+             // Ex: "158 ROYS... 4" -> qtd 4 é segura
+             // Mas se leu o código "158" como qtd, ignoramos acima,
+             // a não ser que tenhamos achado na próxima linha.
+             if (l.match(/\d+$/)) { // Numero no fim da linha
+                 let fim = parseInt(l.match(/(\d+)$/)[1]);
+                 if(fim < 60) total += fim * fator;
+             }
+         }
       }
     }
-  });
+  }
   return total;
 }
 
 function calcular() {
-  const manual = parseFloat(document.getElementById('manual-total').innerText);
-  const sistema = parseFloat(document.getElementById('inp-sistema').value) || 0;
-  const diff = sistema - manual;
-  
+  const diff = (parseFloat(document.getElementById('inp-sistema').value)||0) - parseFloat(document.getElementById('manual-total').innerText);
   const card = document.getElementById('traffic-light');
-  const icon = document.getElementById('res-icon');
-  const val = document.getElementById('res-diff');
-  const desc = document.getElementById('res-desc');
-  
   document.getElementById('result-area').classList.remove('hidden');
-  card.className = 'result-card'; 
-  
-  if (Math.abs(diff) === 0) {
-    card.classList.add('status-verde');
-    icon.innerText = '✅';
-    val.innerText = 'PERFEITO';
-    desc.innerText = 'Tudo certo!';
-  } else if (Math.abs(diff) <= 0.5) {
-    card.classList.add('status-amarelo');
-    icon.innerText = '⚠️';
-    val.innerText = (diff > 0 ? '+' : '') + diff;
-    desc.innerText = 'Pequena diferença (Meio pão)';
-  } else {
-    card.classList.add('status-vermelho');
-    icon.innerText = '🛑';
-    val.innerText = (diff > 0 ? '+' : '') + diff;
-    desc.innerText = 'DIFERENÇA CRÍTICA';
-  }
-  
-  document.getElementById('result-area').scrollIntoView({ behavior: 'smooth' });
+  card.className = 'result-card ' + (Math.abs(diff)==0?'status-verde':(Math.abs(diff)<=0.5?'status-amarelo':'status-vermelho'));
+  document.getElementById('res-icon').innerText = Math.abs(diff)==0?'✅':(Math.abs(diff)<=0.5?'⚠️':'🛑');
+  document.getElementById('res-diff').innerText = diff;
+  document.getElementById('res-desc').innerText = Math.abs(diff)==0?'Perfeito':'Diferença';
+  document.getElementById('result-area').scrollIntoView({behavior:'smooth'});
 }
 
 function salvar() {
   const diff = document.getElementById('res-diff').innerText;
-  const just = document.getElementById('inp-just').value;
-  const dataInput = document.getElementById('inp-data').value;
-  
-  if (diff !== 'PERFEITO' && !just) {
-    alert('Justificativa é obrigatória!');
-    return;
-  }
-  
-  const [ano, mes, dia] = dataInput.split('-');
-  const dataFormatada = `${dia}/${mes}/${ano}`;
-  
-  const history = JSON.parse(localStorage.getItem('roys_data') || '[]');
-  history.unshift({
-    data: dataFormatada,
-    turno: document.getElementById('inp-turno').value,
-    unidade: document.getElementById('inp-unidade').value,
-    resp: document.getElementById('inp-resp').value,
-    status: diff === 'PERFEITO' ? 'ok' : 'erro',
-    diff: diff
+  if(diff!='0' && !document.getElementById('inp-just').value) return alert('Justifique!');
+  const h = JSON.parse(localStorage.getItem('roys_db')||'[]');
+  h.unshift({
+    d: document.getElementById('inp-data').value.split('-').reverse().join('/'),
+    u: document.getElementById('inp-unidade').value,
+    r: document.getElementById('inp-resp').value,
+    v: diff, s: diff=='0'?'ok':'erro'
   });
-  localStorage.setItem('roys_data', JSON.stringify(history));
-  
-  alert('Salvo!');
-  carregarHistorico();
-  navTo('screen-list');
+  localStorage.setItem('roys_db', JSON.stringify(h));
+  alert('Salvo!'); navTo('screen-list');
 }
 
 function carregarHistorico() {
-  const history = JSON.parse(localStorage.getItem('roys_data') || '[]');
-  const container = document.getElementById('history-container');
-  
-  if (history.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:#A0AEC0;">Nenhum registro.</div>';
-    return;
-  }
-  
-  container.innerHTML = '';
-  history.forEach(h => {
-    const cor = h.status === 'ok' ? '#48BB78' : '#F56565';
-    const tagClass = h.status === 'ok' ? 'tag-ok' : 'tag-erro';
-    const turnoShow = h.turno ? `• ${h.turno}` : '';
-    
-    container.innerHTML += `
-      <div class="history-item" style="border-left-color: ${cor}">
-        <div class="history-date">${h.data} ${turnoShow} • ${h.resp}</div>
-        <div class="history-info">
-          <div class="history-unit">${h.unidade}</div>
-          <div class="tag ${tagClass}">${h.diff}</div>
-        </div>
-      </div>
-    `;
-  });
+  const c = document.getElementById('history-container');
+  const h = JSON.parse(localStorage.getItem('roys_db')||'[]');
+  if(h.length) c.innerHTML='';
+  h.forEach(i=>c.innerHTML+=`<div class="history-item" style="border-left-color:${i.s=='ok'?'#48BB78':'#F56565'}"><b>${i.d}</b> • ${i.r}<br><small>${i.u}</small> <span class="tag ${i.s=='ok'?'tag-ok':'tag-erro'}">${i.v}</span></div>`);
 }
-
-function resetarForm() {
-  document.getElementById('inp-resp').value = '';
-  document.getElementById('inp-sistema').value = '';
-  document.getElementById('result-area').classList.add('hidden');
-  document.getElementById('ocr-result').classList.add('hidden');
-  document.getElementById('inp-data').valueAsDate = new Date();
-  gerarInputsManual();
-}
+function resetarForm() { document.getElementById('inp-sistema').value=''; document.getElementById('result-area').classList.add('hidden'); document.getElementById('ocr-result').classList.add('hidden'); gerarInputsManual(); }
 </script>
-
 </body>
 </html>
