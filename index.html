@@ -10,37 +10,46 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
   :root { --red: #E30613; --yellow: #FFC20E; --blue: #005C9F; --bg: #F4F7FA; --card: #FFFFFF; --text: #1A202C; --gray: #A0AEC0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'DM Sans', sans-serif; background-color: var(--bg); color: var(--text); padding-bottom: 90px; }
+
   .header { background: white; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; }
   .logo-area { display: flex; align-items: center; gap: 10px; }
   .logo-img { height: 40px; width: auto; }
   .app-title h1 { font-size: 18px; font-weight: 700; color: var(--red); line-height: 1; }
   .app-title p { font-size: 12px; color: var(--blue); font-weight: 500; }
   .btn-icon { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text); }
+
   .container { padding: 20px; max-width: 600px; margin: 0 auto; }
   .card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #EDF2F7; }
   h2 { font-size: 14px; text-transform: uppercase; color: var(--gray); font-weight: 700; margin-bottom: 12px; letter-spacing: 0.5px; }
+
   .form-group { margin-bottom: 15px; }
   label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #4A5568; }
   input, select, textarea { width: 100%; padding: 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-size: 16px; font-family: inherit; background: #FAFAFA; }
   input:focus, select:focus { outline: none; border-color: var(--blue); background: white; }
+
   .bread-row { background: #F7FAFC; border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid #EDF2F7; }
   .bread-row-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 14px; }
   .bread-equiv { font-size: 12px; background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; }
   .bread-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .bread-col span { display: block; font-size: 10px; color: var(--gray); font-weight: 700; text-align: center; margin-bottom: 4px; }
+
   .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s; }
   .btn:active { transform: scale(0.98); }
   .btn-primary { background: var(--red); color: white; margin-top: 10px; }
   .btn-secondary { background: white; border: 2px solid #E2E8F0; color: var(--text); margin-top: 10px; }
   .btn-camera { background: #2D3748; color: white; margin-bottom: 10px; }
   .fab { position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px; background: var(--red); color: white; border-radius: 50%; font-size: 30px; border: none; box-shadow: 0 4px 15px rgba(227,6,19,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 99; }
+
   .result-box { text-align: center; padding: 25px; border-radius: 16px; color: white; margin-top: 20px; }
   .status-verde { background: linear-gradient(135deg, #48BB78, #2F855A); }
   .status-amarelo { background: linear-gradient(135deg, #ECC94B, #D69E2E); color: #333; }
@@ -48,10 +57,12 @@
   .tag { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
   .tag-ok { background: #C6F6D5; color: #22543D; }
   .tag-erro { background: #FED7D7; color: #822727; }
+
   .history-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #CBD5E0; box-shadow: 0 2px 5px rgba(0,0,0,0.03); cursor: pointer; }
   .history-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray); font-weight: 700; margin-bottom: 5px; }
   .history-main { display: flex; justify-content: space-between; align-items: center; }
   .history-unit { font-weight: 700; color: var(--text); }
+
   .hidden { display: none !important; }
   .loading { text-align: center; padding: 20px; }
   .spinner { width: 30px; height: 30px; border: 3px solid #E2E8F0; border-top: 3px solid var(--blue); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 10px; }
@@ -90,6 +101,7 @@
       <div class="form-group"><label>Unidade</label><select id="inp-unidade"><option>Shopping da Ilha</option><option>Rio Anil</option><option>Golden Shopping</option><option>Outra</option></select></div>
       <div class="form-group"><label>Responsável</label><input type="text" id="inp-resp" placeholder="Nome"></div>
     </div>
+
     <div class="card">
       <h2>2. Contagem Manual (Estoque)</h2>
       <div id="manual-inputs"></div>
@@ -97,6 +109,7 @@
         Total Utilizados: <span id="manual-total" style="font-size:20px">0</span> eq.
       </div>
     </div>
+
     <div class="card">
       <h2>3. Leitura do Sistema</h2>
       <p style="font-size:13px; color:#718096; margin-bottom:15px;">Selecione o <b>PDF</b> ou tire foto.</p>
@@ -174,14 +187,14 @@ function updManual(id,t,v) {
   document.getElementById('manual-total').innerText = calc('abertura')+calc('assados')-calc('desperdicio')-calc('cortesia')-calc('sobra');
 }
 
-// --- LEITOR DE PDF AVANÇADO (V11) ---
+// --- LEITOR V12 (COM BLACKLIST) ---
 async function processarArquivo(inp) {
   if(!inp.files[0]) return;
   document.getElementById('ocr-loading').classList.remove('hidden');
   document.getElementById('ocr-result').classList.add('hidden');
   try {
     let txt = inp.files[0].type=='application/pdf' ? await lerPDF(inp.files[0]) : await lerImagem(inp.files[0]);
-    const res = analisarTextoV11(txt);
+    const res = analisarTextoV12(txt);
     document.getElementById('inp-sistema').value = res.total;
     itensSistemaDetectados = res.itens;
     document.getElementById('lista-itens-ocr').innerHTML = res.itens.map(i => `<div style="border-bottom:1px solid #ddd;padding:2px"><b>${i.qtd}</b> x ${i.nome} <span style="float:right;color:#777">(${i.fator})</span></div>`).join('');
@@ -196,33 +209,24 @@ async function lerPDF(f) {
   for(let i=1; i<=pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    // DETECÇÃO DE LINHA POR COORDENADA Y (Crucial para não misturar tudo)
-    let lastY = -1;
-    let pageText = "";
-    // Filtra itens vazios e organiza
+    let lastY = -1; let pageText = "";
     const items = content.items.filter(it => it.str.trim().length > 0);
     for (const item of items) {
-        const y = item.transform[5]; // Posição vertical
-        if (lastY !== -1 && Math.abs(y - lastY) > 5) {
-            pageText += "\n"; // Quebra de linha se a altura mudou
-        } else if (lastY !== -1) {
-            pageText += " "; // Espaço se for na mesma linha
-        }
-        pageText += item.str;
-        lastY = y;
+        const y = item.transform[5];
+        if (lastY !== -1 && Math.abs(y - lastY) > 5) pageText += "\n"; else if (lastY !== -1) pageText += " ";
+        pageText += item.str; lastY = y;
     }
     fullText += pageText + "\n";
   }
   return fullText;
 }
-
 async function lerImagem(f) {
   const w = await Tesseract.createWorker('por');
   const {data:{text}} = await w.recognize(f);
   await w.terminate(); return text;
 }
 
-function analisarTextoV11(texto) {
+function analisarTextoV12(texto) {
   const linhas = texto.toUpperCase().split('\n');
   let total = 0, itens = [], categoriaAtual = ""; 
 
@@ -230,7 +234,10 @@ function analisarTextoV11(texto) {
     let l = linha.trim();
     if (l.length < 3) continue;
 
-    // 1. Contexto de Categoria
+    // 1. BLACKLIST (Exclui Batatas, Saladas, Fresh Fit, etc)
+    if (l.includes('BATATA') || l.includes('FRESH FIT') || l.includes('SALADA') || l.includes('BEBIDA') || l.includes('AGUA') || l.includes('SUCO') || l.includes('REFRI') || l.includes('MOUSSE') || l.includes('ADICIONAL') || l.includes('EMBALAGEM') || l.includes('CHIPS')) continue;
+
+    // 2. Contexto de Categoria
     if (l.includes('SANDUICHE SMART') || l.includes('COMBOS SMART')) categoriaAtual = "SMART";
     else if (l.includes('SANDUICHE SUPER') || l.includes('COMBOS NOVOS SUPER')) categoriaAtual = "SUPER";
     else if (l.includes('PROMOCOES')) categoriaAtual = "PROMOCOES";
@@ -239,49 +246,41 @@ function analisarTextoV11(texto) {
     
     if (categoriaAtual === "IGNORAR") continue;
 
-    // 2. Extração de itens (com suporte a múltiplas colunas na mesma linha)
-    // Regex: Procura [Qtd] [Espaço] [Preço com virgula]
     const regexQtdPreco = /(\d{1,2})\s+[\d.,]{3,}/g;
     let match;
     
     while ((match = regexQtdPreco.exec(l)) !== null) {
       let qtd = parseInt(match[1]); 
       let indexFimNome = match.index;
-      let trechoAnterior = l.substring(0, indexFimNome); // Pega o texto antes do número
+      let trechoAnterior = l.substring(0, indexFimNome); 
       
-      // 3. Define Fator
       let fator = 0;
       
-      // Regra: Se estamos em PROMOCOES, procuramos itens específicos
       if (categoriaAtual === "PROMOCOES") {
           if (trechoAnterior.includes('ROYS PRA VALER')) {
               if (trechoAnterior.includes('SEG')) fator = 0.5;
-              else if (trechoAnterior.includes('TER') || trechoAnterior.includes('QUA')) fator = 1.0;
-              else fator = 0.5; // Outros dias
+              else if (trechoAnterior.includes('TER') || trechoAnterior.includes('QUA') || trechoAnterior.includes('QUI') || trechoAnterior.includes('SEX')) fator = 1.0;
+              else fator = 0.5; 
           } 
           else if (trechoAnterior.includes('ROYS FDS')) fator = 1.0;
           else if (trechoAnterior.includes('ROYS KIDS')) fator = 0.5;
-          // FALLBACK: Se achou um sanduiche normal DENTRO de promoções (ex: erro de leitura ou layout)
+          // Fallback para sanduíches normais dentro de promoções (erro comum de PDF)
           else if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM')) fator = 0.5;
           else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM')) fator = 1.0;
       } 
-      // Regras Normais
       else {
           if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM')) fator = 0.5;
           else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM') || trechoAnterior.includes('DOUBLE')) fator = 1.0;
-          else if (trechoAnterior.includes('BIG KING') || trechoAnterior.includes('MEGA') || trechoAnterior.includes('TRIO')) fator = 2.0;
+          else if (trechoAnterior.includes('BIG KING') || trechoAnterior.includes('MEGA')) fator = 2.0;
+          else if (trechoAnterior.includes('TRIO MIX')) fator = 1.5;
           
-          // Usa contexto se não achou no nome
           if (fator === 0 && (categoriaAtual === "SMART" || categoriaAtual === "SUPER")) {
              fator = (categoriaAtual === "SMART") ? 0.5 : 1.0;
           }
       }
 
-      // 4. Validação e Soma
-      // Tem que ter nome de produto válido E fator > 0
-      if (fator > 0 && (trechoAnterior.includes('ROYS') || trechoAnterior.includes('COMBO') || trechoAnterior.includes('SMASH') || trechoAnterior.includes('KING') || trechoAnterior.includes('TRIO') || trechoAnterior.includes('FRESH') || trechoAnterior.includes('FDS'))) {
-         // Ignora taxas e embalagens
-         if (!trechoAnterior.includes('TAXA') && !trechoAnterior.includes('ENTREGA') && !trechoAnterior.includes('EMBALAGEM')) {
+      if (fator > 0 && (trechoAnterior.includes('ROYS') || trechoAnterior.includes('COMBO') || trechoAnterior.includes('SMASH') || trechoAnterior.includes('KING') || trechoAnterior.includes('TRIO') || trechoAnterior.includes('FDS') || trechoAnterior.includes('DOUBLE'))) {
+         if (!trechoAnterior.includes('TAXA') && !trechoAnterior.includes('ENTREGA')) {
              if (qtd > 0 && qtd < 60) {
                 total += qtd * fator;
                 let nomeLimpo = trechoAnterior.replace(/\d+/g, '').replace('SUB-TOTAL','').substring(0,25).trim();
@@ -289,7 +288,6 @@ function analisarTextoV11(texto) {
              }
          }
       }
-      // Avança na string para procurar o próximo item (coluna da direita)
       l = l.substring(indexFimNome + match[0].length);
       regexQtdPreco.lastIndex = 0;
     }
