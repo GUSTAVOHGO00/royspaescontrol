@@ -10,46 +10,37 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-<script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-</script>
-
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
   :root { --red: #E30613; --yellow: #FFC20E; --blue: #005C9F; --bg: #F4F7FA; --card: #FFFFFF; --text: #1A202C; --gray: #A0AEC0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'DM Sans', sans-serif; background-color: var(--bg); color: var(--text); padding-bottom: 90px; }
-
   .header { background: white; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; }
   .logo-area { display: flex; align-items: center; gap: 10px; }
   .logo-img { height: 40px; width: auto; }
   .app-title h1 { font-size: 18px; font-weight: 700; color: var(--red); line-height: 1; }
   .app-title p { font-size: 12px; color: var(--blue); font-weight: 500; }
   .btn-icon { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text); }
-
   .container { padding: 20px; max-width: 600px; margin: 0 auto; }
   .card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #EDF2F7; }
   h2 { font-size: 14px; text-transform: uppercase; color: var(--gray); font-weight: 700; margin-bottom: 12px; letter-spacing: 0.5px; }
-
   .form-group { margin-bottom: 15px; }
   label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #4A5568; }
   input, select, textarea { width: 100%; padding: 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-size: 16px; font-family: inherit; background: #FAFAFA; }
   input:focus, select:focus { outline: none; border-color: var(--blue); background: white; }
-
   .bread-row { background: #F7FAFC; border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid #EDF2F7; }
   .bread-row-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 14px; }
   .bread-equiv { font-size: 12px; background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; }
   .bread-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .bread-col span { display: block; font-size: 10px; color: var(--gray); font-weight: 700; text-align: center; margin-bottom: 4px; }
-
   .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s; }
   .btn:active { transform: scale(0.98); }
   .btn-primary { background: var(--red); color: white; margin-top: 10px; }
   .btn-secondary { background: white; border: 2px solid #E2E8F0; color: var(--text); margin-top: 10px; }
   .btn-camera { background: #2D3748; color: white; margin-bottom: 10px; }
   .fab { position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px; background: var(--red); color: white; border-radius: 50%; font-size: 30px; border: none; box-shadow: 0 4px 15px rgba(227,6,19,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 99; }
-
   .result-box { text-align: center; padding: 25px; border-radius: 16px; color: white; margin-top: 20px; }
   .status-verde { background: linear-gradient(135deg, #48BB78, #2F855A); }
   .status-amarelo { background: linear-gradient(135deg, #ECC94B, #D69E2E); color: #333; }
@@ -57,18 +48,15 @@
   .tag { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
   .tag-ok { background: #C6F6D5; color: #22543D; }
   .tag-erro { background: #FED7D7; color: #822727; }
-
   .history-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #CBD5E0; box-shadow: 0 2px 5px rgba(0,0,0,0.03); cursor: pointer; }
   .history-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray); font-weight: 700; margin-bottom: 5px; }
   .history-main { display: flex; justify-content: space-between; align-items: center; }
   .history-unit { font-weight: 700; color: var(--text); }
-
   .hidden { display: none !important; }
   .loading { text-align: center; padding: 20px; }
   .spinner { width: 30px; height: 30px; border: 3px solid #E2E8F0; border-top: 3px solid var(--blue); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 10px; }
   @keyframes spin { 100% { transform: rotate(360deg); } }
-  .item-row { display: flex; justify-content: space-between; border-bottom: 1px solid #EEE; padding: 8px 0; font-size: 13px; }
-  .item-name { font-weight: 600; flex: 1; }
+  #canvas-ocr { display: none; }
 </style>
 </head>
 <body>
@@ -81,7 +69,7 @@
     </div>
   </div>
   <div class="container">
-    <h2>Histórico Recente</h2>
+    <h2>Histórico</h2>
     <div id="history-container"><div style="text-align:center; padding:40px; color:#A0AEC0;">📂 Nenhum registro.</div></div>
   </div>
   <button class="fab" onclick="navTo('screen-new')">+</button>
@@ -101,21 +89,19 @@
       <div class="form-group"><label>Unidade</label><select id="inp-unidade"><option>Shopping da Ilha</option><option>Rio Anil</option><option>Golden Shopping</option><option>Outra</option></select></div>
       <div class="form-group"><label>Responsável</label><input type="text" id="inp-resp" placeholder="Nome"></div>
     </div>
-
     <div class="card">
-      <h2>2. Contagem Manual (Estoque)</h2>
+      <h2>2. Contagem Manual</h2>
       <div id="manual-inputs"></div>
       <div style="margin-top:15px; background:#EBF8FF; color:#2B6CB0; padding:15px; border-radius:12px; text-align:center; font-weight:700;">
         Total Utilizados: <span id="manual-total" style="font-size:20px">0</span> eq.
       </div>
     </div>
-
     <div class="card">
       <h2>3. Leitura do Sistema</h2>
       <p style="font-size:13px; color:#718096; margin-bottom:15px;">Selecione o <b>PDF</b> ou tire foto.</p>
       <input type="file" id="file-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)">
       <button class="btn btn-camera" onclick="document.getElementById('file-input').click()">📁 Abrir PDF ou 📸 Foto</button>
-      <div id="ocr-loading" class="loading hidden"><div class="spinner"></div><span>Analisando arquivo...</span></div>
+      <div id="ocr-loading" class="loading hidden"><div class="spinner"></div><span>Lendo imagem...</span></div>
       <div id="ocr-result" class="hidden">
         <div class="form-group" style="margin-top:10px">
           <label>Total Sistema (Pães 30cm)</label>
@@ -125,7 +111,6 @@
             <div style="font-size:12px; color:var(--blue); cursor:pointer; font-weight:bold" onclick="document.getElementById('lista-itens-ocr').classList.toggle('hidden')">Ver itens detectados ▼</div>
             <div id="lista-itens-ocr" class="hidden" style="max-height:150px; overflow-y:auto; background:#f9f9f9; padding:5px; border:1px solid #eee; font-size:11px;"></div>
         </div>
-        <textarea id="ocr-log" style="display:none"></textarea>
       </div>
     </div>
     <button class="btn btn-primary" onclick="calcular()">CALCULAR RESULTADO</button>
@@ -136,8 +121,8 @@
         <div style="font-size:16px; opacity:0.9" id="res-desc">Sem diferença</div>
       </div>
       <div class="card" style="margin-top:20px">
-        <label>Justificativa (Obrigatória se houver erro)</label>
-        <input type="text" id="inp-just" placeholder="Explique o motivo...">
+        <label>Justificativa</label>
+        <input type="text" id="inp-just" placeholder="Motivo...">
       </div>
       <button class="btn btn-secondary" onclick="salvar()">💾 SALVAR NO HISTÓRICO</button>
     </div>
@@ -146,32 +131,17 @@
 </div>
 
 <div id="screen-detail" class="hidden">
-    <div class="header">
-        <button class="btn-icon" onclick="navTo('screen-list')">←</button>
-        <div class="app-title"><h1>Detalhes</h1></div>
-        <div style="width:20px"></div>
-    </div>
-    <div class="container">
-        <div id="detail-content"></div>
-        <button class="btn btn-primary" onclick="exportarPDF()">📄 EXPORTAR PDF</button>
-        <div style="height:20px"></div>
-    </div>
+    <div class="header"><button class="btn-icon" onclick="navTo('screen-list')">←</button><div class="app-title"><h1>Detalhes</h1></div><div style="width:20px"></div></div>
+    <div class="container"><div id="detail-content"></div><button class="btn btn-primary" onclick="exportarPDF()">📄 EXPORTAR PDF</button></div>
 </div>
+<canvas id="canvas-ocr"></canvas>
 
 <script>
-const CATEGORIAS = [
-  {id:'abertura', label:'A) Abertura'}, {id:'assados', label:'B) Assados/Produzidos'},
-  {id:'desperdicio', label:'C) Desperdícios'}, {id:'cortesia', label:'D) Cortesias'}, {id:'sobra', label:'E) Sobra Final'}
-];
+const CATEGORIAS = [{id:'abertura', label:'A) Abertura'}, {id:'assados', label:'B) Assados/Produzidos'}, {id:'desperdicio', label:'C) Desperdícios'}, {id:'cortesia', label:'D) Cortesias'}, {id:'sobra', label:'E) Sobra Final'}];
 let dadosManual = {}, itensSistemaDetectados = [], fechamentoAtual = null;
 
 window.onload = () => { gerarInputsManual(); carregarHistorico(); document.getElementById('inp-data').valueAsDate = new Date(); }
-function navTo(id) {
-  document.querySelectorAll('body > div').forEach(d => d.classList.add('hidden'));
-  document.getElementById(id).classList.remove('hidden');
-  if(id=='screen-new') resetarForm();
-  if(id=='screen-list') carregarHistorico();
-}
+function navTo(id) { document.querySelectorAll('body > div').forEach(d => d.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); if(id=='screen-new') resetarForm(); if(id=='screen-list') carregarHistorico(); }
 
 function gerarInputsManual() {
   const c = document.getElementById('manual-inputs'); c.innerHTML='';
@@ -187,121 +157,177 @@ function updManual(id,t,v) {
   document.getElementById('manual-total').innerText = calc('abertura')+calc('assados')-calc('desperdicio')-calc('cortesia')-calc('sobra');
 }
 
-// --- LEITOR V12 (COM BLACKLIST) ---
 async function processarArquivo(inp) {
   if(!inp.files[0]) return;
   document.getElementById('ocr-loading').classList.remove('hidden');
   document.getElementById('ocr-result').classList.add('hidden');
   try {
-    let txt = inp.files[0].type=='application/pdf' ? await lerPDF(inp.files[0]) : await lerImagem(inp.files[0]);
-    const res = analisarTextoV12(txt);
+    let txt = "";
+    if (inp.files[0].type === 'application/pdf') txt = await lerPDF(inp.files[0]);
+    else { const img = await preprocessImage(inp.files[0]); txt = await lerImagem(img); }
+    const res = analisarTextoV17(txt);
     document.getElementById('inp-sistema').value = res.total;
     itensSistemaDetectados = res.itens;
-    document.getElementById('lista-itens-ocr').innerHTML = res.itens.map(i => `<div style="border-bottom:1px solid #ddd;padding:2px"><b>${i.qtd}</b> x ${i.nome} <span style="float:right;color:#777">(${i.fator})</span></div>`).join('');
+    document.getElementById('lista-itens-ocr').innerHTML = res.itens.map(i => `<div style="border-bottom:1px solid #ddd;padding:2px;font-size:11px"><b>${i.qtd}</b> x ${i.nome} <span style="float:right;color:#555">(${i.fator})</span></div>`).join('');
+    if(res.total === 0) alert('Atenção: Leitura zero. Verifique a foto.');
     document.getElementById('ocr-result').classList.remove('hidden');
-  } catch(e){ console.log(e); alert('Erro ao ler. Digite manual.'); }
+  } catch(e){ console.log(e); alert('Erro ao processar.'); }
   finally { document.getElementById('ocr-loading').classList.add('hidden'); }
 }
 
 async function lerPDF(f) {
   const pdf = await pdfjsLib.getDocument(await f.arrayBuffer()).promise;
-  let fullText = "";
-  for(let i=1; i<=pdf.numPages; i++) {
+  let t = ""; 
+  for(let i=1;i<=pdf.numPages;i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    let lastY = -1; let pageText = "";
+    let lastY = -1;
     const items = content.items.filter(it => it.str.trim().length > 0);
     for (const item of items) {
         const y = item.transform[5];
-        if (lastY !== -1 && Math.abs(y - lastY) > 5) pageText += "\n"; else if (lastY !== -1) pageText += " ";
-        pageText += item.str; lastY = y;
+        if (lastY !== -1 && Math.abs(y - lastY) > 5) t += "\n"; else if (lastY !== -1) t += " ";
+        t += item.str; lastY = y;
     }
-    fullText += pageText + "\n";
+    t += "\n";
   }
-  return fullText;
+  return t;
 }
-async function lerImagem(f) {
+
+function preprocessImage(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.getElementById('canvas-ocr');
+                const ctx = canvas.getContext('2d');
+                let w = img.width; let h = img.height;
+                if(w > 1500) { h = h * (1500/w); w = 1500; }
+                canvas.width = w; canvas.height = h;
+                ctx.drawImage(img, 0, 0, w, h);
+                const imgData = ctx.getImageData(0, 0, w, h);
+                const d = imgData.data;
+                for (let i=0; i<d.length; i+=4) {
+                    const avg = (d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114);
+                    const v = (avg > 130) ? 255 : 0; 
+                    d[i] = d[i+1] = d[i+2] = v;
+                }
+                ctx.putImageData(imgData, 0, 0);
+                resolve(canvas.toDataURL('image/jpeg'));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+async function lerImagem(imgSrc) {
   const w = await Tesseract.createWorker('por');
-  const {data:{text}} = await w.recognize(f);
+  await w.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK });
+  const {data:{text}} = await w.recognize(imgSrc);
   await w.terminate(); return text;
 }
 
-function analisarTextoV12(texto) {
+// --- CÉREBRO V17 (CORREÇÃO TOTAL DA FOTO) ---
+function analisarTextoV17(texto) {
   const linhas = texto.toUpperCase().split('\n');
   let total = 0, itens = [], categoriaAtual = ""; 
 
   for (let linha of linhas) {
-    let l = linha.trim();
+    // Normalização agressiva
+    let l = linha.trim().replace(/l/g,'1').replace(/I/g,'1').replace(/O/g,'0').replace(/\|/g,'1');
     if (l.length < 3) continue;
 
-    // 1. BLACKLIST (Exclui Batatas, Saladas, Fresh Fit, etc)
-    if (l.includes('BATATA') || l.includes('FRESH FIT') || l.includes('SALADA') || l.includes('BEBIDA') || l.includes('AGUA') || l.includes('SUCO') || l.includes('REFRI') || l.includes('MOUSSE') || l.includes('ADICIONAL') || l.includes('EMBALAGEM') || l.includes('CHIPS')) continue;
+    // 1. BLACKLIST
+    if (l.includes('BATATA') || l.includes('FRESH FIT') || l.includes('SALADA') || l.includes('BEBIDA') || l.includes('AGUA') || l.includes('SUCO') || l.includes('REFRI') || l.includes('MOUSSE') || l.includes('ADICIONAL') || l.includes('EMBALAGEM') || l.includes('CHIPS') || l.includes('TAXA') || l.includes('ENTREGA') || l.includes('INTEGRADOR') || l.includes('IFOO')) continue;
 
-    // 2. Contexto de Categoria
+    // 2. CONTEXTO
     if (l.includes('SANDUICHE SMART') || l.includes('COMBOS SMART')) categoriaAtual = "SMART";
-    else if (l.includes('SANDUICHE SUPER') || l.includes('COMBOS NOVOS SUPER')) categoriaAtual = "SUPER";
+    else if (l.includes('SANDUICHE SUPER') || l.includes('COMBOS SUPER') || l.includes('COMBOS NOVOS SUPER')) categoriaAtual = "SUPER";
     else if (l.includes('PROMOCOES')) categoriaAtual = "PROMOCOES";
-    else if (l.includes('OFERTAS ROYS')) categoriaAtual = "SUPER"; 
+    else if (l.includes('OFERTAS ROYS')) categoriaAtual = "OFERTAS"; 
     else if (l === 'ROYS PRA VALER' || l === 'FDS') categoriaAtual = "IGNORAR";
     
     if (categoriaAtual === "IGNORAR") continue;
 
-    const regexQtdPreco = /(\d{1,2})\s+[\d.,]{3,}/g;
-    let match;
-    
-    while ((match = regexQtdPreco.exec(l)) !== null) {
-      let qtd = parseInt(match[1]); 
-      let indexFimNome = match.index;
-      let trechoAnterior = l.substring(0, indexFimNome); 
-      
-      let fator = 0;
-      
-      if (categoriaAtual === "PROMOCOES") {
-          if (trechoAnterior.includes('ROYS PRA VALER')) {
-              if (trechoAnterior.includes('SEG')) fator = 0.5;
-              else if (trechoAnterior.includes('TER') || trechoAnterior.includes('QUA') || trechoAnterior.includes('QUI') || trechoAnterior.includes('SEX')) fator = 1.0;
-              else fator = 0.5; 
-          } 
-          else if (trechoAnterior.includes('ROYS FDS')) fator = 1.0;
-          else if (trechoAnterior.includes('ROYS KIDS')) fator = 0.5;
-          // Fallback para sanduíches normais dentro de promoções (erro comum de PDF)
-          else if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM')) fator = 0.5;
-          else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM')) fator = 1.0;
-      } 
-      else {
-          if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM')) fator = 0.5;
-          else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM') || trechoAnterior.includes('DOUBLE')) fator = 1.0;
-          else if (trechoAnterior.includes('BIG KING') || trechoAnterior.includes('MEGA')) fator = 2.0;
-          else if (trechoAnterior.includes('TRIO MIX')) fator = 1.5;
-          
-          if (fator === 0 && (categoriaAtual === "SMART" || categoriaAtual === "SUPER")) {
-             fator = (categoriaAtual === "SMART") ? 0.5 : 1.0;
-          }
-      }
+    // 3. EXTRAÇÃO
+    const numeros = l.match(/\b\d+\b/g);
+    if (!numeros) continue;
 
-      if (fator > 0 && (trechoAnterior.includes('ROYS') || trechoAnterior.includes('COMBO') || trechoAnterior.includes('SMASH') || trechoAnterior.includes('KING') || trechoAnterior.includes('TRIO') || trechoAnterior.includes('FDS') || trechoAnterior.includes('DOUBLE'))) {
-         if (!trechoAnterior.includes('TAXA') && !trechoAnterior.includes('ENTREGA')) {
-             if (qtd > 0 && qtd < 60) {
-                total += qtd * fator;
-                let nomeLimpo = trechoAnterior.replace(/\d+/g, '').replace('SUB-TOTAL','').substring(0,25).trim();
-                itens.push({ nome: nomeLimpo, qtd: qtd, fator: fator });
-             }
-         }
-      }
-      l = l.substring(indexFimNome + match[0].length);
-      regexQtdPreco.lastIndex = 0;
+    let fator = 0;
+    
+    // Regras Específicas
+    if (categoriaAtual === "PROMOCOES") {
+        if (l.includes('ROYS PRA VALER')) {
+            if (l.includes('SEG')) fator = 0.5;
+            else if (l.includes('TER') || l.includes('QUA') || l.includes('QUI') || l.includes('SEX')) fator = 1.0;
+            else fator = 0.5;
+        } 
+        else if (l.includes('ROYS FDS')) fator = 1.0;
+        else if (l.includes('ROYS KIDS')) fator = 0.5;
+        // Fallback para leitura quebrada
+        else if (l.includes('SMART')) fator = 0.5;
+        else if (l.includes('SUPER')) fator = 1.0;
+    } 
+    else if (categoriaAtual === "OFERTAS") {
+        if (l.includes('DOUBLE')) fator = 1.0;
+        else if (l.includes('TRIO MIX')) fator = 2.0; 
+        else if (l.includes('BIG KING') || l.includes('MEGA')) fator = 2.0;
+        else if (l.includes('CRISPY LOVERS')) fator = 1.0; // Adicionado
+        else if (l.includes('SMART')) fator = 0.5;
+        else if (l.includes('SUPER')) fator = 1.0;
+    }
+    else {
+        if (l.includes('SMART') || l.includes('15CM') || l.includes('COMBOS SMART')) fator = 0.5;
+        else if (l.includes('SUPER') || l.includes('30CM') || l.includes('DOUBLE') || l.includes('CRISPY') || l.includes('FRANGO CREAM') || l.includes('PICANHA') || l.includes('COMBOS SUPER')) fator = 1.0;
+        else if (l.includes('BIG KING') || l.includes('MEGA')) fator = 2.0;
+        
+        if (fator === 0 && (categoriaAtual === "SMART" || categoriaAtual === "SUPER")) {
+             fator = (categoriaAtual === "SMART") ? 0.5 : 1.0;
+        }
+    }
+
+    if (fator > 0 && (l.includes('ROYS') || l.includes('COMBO') || l.includes('SMASH') || l.includes('KING') || l.includes('TRIO') || l.includes('FDS') || l.includes('DOUBLE') || l.includes('PRA VALER') || l.includes('CRISPY') || l.includes('KIDS'))) {
+        
+        // Lógica de "Caçador de Números" aprimorada
+        let qtd = 0;
+        for(let numStr of numeros) {
+            let n = parseInt(numStr);
+            if (n > 0 && n < 100) { 
+                // Se o número está no INÍCIO da linha, é código SE for > 30.
+                // Ex: "351 ROYS..." (351 é código)
+                // Ex: "12 CEBOLA..." (12 é código, mas já foi filtrado por blacklist)
+                // Ex: "305 DOUBLE..." (305 é código)
+                if (l.startsWith(numStr)) {
+                    // Se for pequeno (<30), assume que é quantidade (ex: erro de leitura onde o código sumiu)
+                    // Mas se tiver "ROYS" logo depois, é arriscado.
+                    // Na foto, os códigos são todos > 100 ou combos (2xx).
+                    // Então qualquer número < 60 no começo é suspeito de ser quantidade deslocada.
+                    if (n < 30) { qtd = n; break; }
+                } else {
+                    // Se está no meio da frase, é a quantidade com certeza.
+                    qtd = n; break; 
+                }
+            }
+        }
+
+        if (qtd > 0) {
+            total += qtd * fator;
+            let nome = l.replace(/\d+/g, '').replace('SUB-TOTAL','').replace('-','').substring(0,22).trim();
+            itens.push({nome: nome, qtd: qtd, fator: fator});
+        }
     }
   }
   return { total: total, itens: itens };
 }
 
+// --- RESTO DO APP ---
 function calcular() {
   const manual = parseFloat(document.getElementById('manual-total').innerText);
   const sistema = parseFloat(document.getElementById('inp-sistema').value)||0;
   const diff = sistema - manual;
-  const card = document.getElementById('traffic-light');
   document.getElementById('result-area').classList.remove('hidden');
-  
+  const card = document.getElementById('traffic-light');
   if(Math.abs(diff) == 0) { card.className='result-box status-verde'; document.getElementById('res-icon').innerText='✅'; document.getElementById('res-desc').innerText='Perfeito!'; } 
   else if (Math.abs(diff) <= 0.5) { card.className='result-box status-amarelo'; document.getElementById('res-icon').innerText='⚠️'; document.getElementById('res-desc').innerText='Pequena diferença.'; } 
   else { card.className='result-box status-vermelho'; document.getElementById('res-icon').innerText='🛑'; document.getElementById('res-desc').innerText='DIFERENÇA CRÍTICA!'; }
@@ -313,19 +339,7 @@ function salvar() {
   const diff = document.getElementById('res-diff').innerText;
   const just = document.getElementById('inp-just').value;
   if (diff != '0' && diff != '+0' && !just) return alert('Justificativa obrigatória!');
-
-  const registro = {
-      id: Date.now(),
-      data: document.getElementById('inp-data').value.split('-').reverse().join('/'),
-      turno: document.getElementById('inp-turno').value,
-      unidade: document.getElementById('inp-unidade').value,
-      resp: document.getElementById('inp-resp').value,
-      manual: parseFloat(document.getElementById('manual-total').innerText),
-      sistema: parseFloat(document.getElementById('inp-sistema').value)||0,
-      diff: diff,
-      just: just,
-      itens: itensSistemaDetectados
-  };
+  const registro = { id: Date.now(), data: document.getElementById('inp-data').value.split('-').reverse().join('/'), turno: document.getElementById('inp-turno').value, unidade: document.getElementById('inp-unidade').value, resp: document.getElementById('inp-resp').value, manual: parseFloat(document.getElementById('manual-total').innerText), sistema: parseFloat(document.getElementById('inp-sistema').value)||0, diff: diff, just: just, itens: itensSistemaDetectados };
   const db = JSON.parse(localStorage.getItem('roys_full_db')||'[]');
   db.unshift(registro);
   localStorage.setItem('roys_full_db', JSON.stringify(db));
@@ -337,15 +351,12 @@ function carregarHistorico() {
   const db = JSON.parse(localStorage.getItem('roys_full_db')||'[]');
   if(db.length === 0) return div.innerHTML = '<div style="text-align:center;padding:40px;color:#AAA;">📂 Vazio</div>';
   div.innerHTML = '';
-  db.forEach(r => {
-      div.innerHTML += `<div class="history-item" style="border-left-color:${(r.diff=='0'||r.diff=='+0')?'#48BB78':'#F56565'}" onclick="abrirDetalhe(${r.id})"><div class="history-top"><span>${r.data}</span> <span>${r.turno}</span></div><div class="history-main"><div class="history-unit">${r.unidade}</div><div class="tag ${(r.diff=='0'||r.diff=='+0')?'tag-ok':'tag-erro'}">${r.diff}</div></div></div>`;
-  });
+  db.forEach(r => { div.innerHTML += `<div class="history-item" style="border-left-color:${(r.diff=='0'||r.diff=='+0')?'#48BB78':'#F56565'}" onclick="abrirDetalhe(${r.id})"><div class="history-top"><span>${r.data}</span> <span>${r.turno}</span></div><div class="history-main"><div class="history-unit">${r.unidade}</div><div class="tag ${(r.diff=='0'||r.diff=='+0')?'tag-ok':'tag-erro'}">${r.diff}</div></div></div>`; });
 }
 
 function abrirDetalhe(id) {
     fechamentoAtual = JSON.parse(localStorage.getItem('roys_full_db')||'[]').find(x => x.id == id);
-    if(!fechamentoAtual) return;
-    document.getElementById('detail-content').innerHTML = `<div class="card"><h2>Resumo</h2><p><b>Data:</b> ${fechamentoAtual.data}</p><p><b>Manual:</b> ${fechamentoAtual.manual} | <b>Sistema:</b> ${fechamentoAtual.sistema}</p><div style="text-align:center;margin-top:10px;font-size:18px;font-weight:bold;color:${(fechamentoAtual.diff=='0'||fechamentoAtual.diff=='+0')?'#48BB78':'#F56565'}">Diferença: ${fechamentoAtual.diff}</div>${fechamentoAtual.just?`<p style="margin-top:5px">Just: ${fechamentoAtual.just}</p>`:''}</div>`;
+    document.getElementById('detail-content').innerHTML = `<div class="card"><h2>${fechamentoAtual.data}</h2><p><b>Manual:</b> ${fechamentoAtual.manual} | <b>Sistema:</b> ${fechamentoAtual.sistema}</p><h3>Diferença: ${fechamentoAtual.diff}</h3></div>`;
     navTo('screen-detail');
 }
 
@@ -355,9 +366,7 @@ function exportarPDF() {
     doc.setFillColor(227,6,19); doc.rect(0,0,210,20,'F'); doc.setTextColor(255,255,255); doc.setFontSize(16); doc.text("Relatório Roy's",10,13);
     doc.setTextColor(0,0,0); doc.setFontSize(12); doc.text(`Data: ${fechamentoAtual.data} | Unidade: ${fechamentoAtual.unidade}`,10,30);
     doc.text(`Manual: ${fechamentoAtual.manual} | Sistema: ${fechamentoAtual.sistema} | Diff: ${fechamentoAtual.diff}`,10,40);
-    if(fechamentoAtual.itens && fechamentoAtual.itens.length > 0) {
-        doc.autoTable({ startY: 50, head: [['Item','Qtd','Fator']], body: fechamentoAtual.itens.map(i=>[i.nome,i.qtd,i.fator]) });
-    }
+    if(fechamentoAtual.itens && fechamentoAtual.itens.length > 0) doc.autoTable({ startY: 50, head: [['Item','Qtd','Fator']], body: fechamentoAtual.itens.map(i=>[i.nome,i.qtd,i.fator]) });
     doc.save('fechamento.pdf');
 }
 
