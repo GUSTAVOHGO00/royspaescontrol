@@ -98,18 +98,21 @@
 
     <div class="card">
       <h2>3. Leitura do Sistema</h2>
-      <p style="font-size:13px; color:#718096; margin-bottom:15px;">Dica: Prefira PDF para leitura exata.</p>
+      <p style="font-size:13px; color:#718096; margin-bottom:15px;">Dica: Use PDF para melhor precisão.</p>
       <input type="file" id="camera-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)">
       <button class="btn btn-camera" onclick="document.getElementById('camera-input').click()">📁 Abrir PDF ou 📸 Foto</button>
 
-      <div id="ocr-loading" class="loading"><div class="spinner"></div><span id="loading-text">Analisando Arquivo...</span></div>
+      <div id="ocr-loading" class="loading"><div class="spinner"></div><span id="loading-text">Analisando...</span></div>
 
       <div id="ocr-result" class="hidden">
         <div class="form-group" style="margin-top:10px">
           <label>Total Sistema (Pães 30cm)</label>
           <input type="number" id="inp-sistema" style="font-size:24px; color:var(--red); font-weight:700;" placeholder="0">
         </div>
-        <textarea id="ocr-debug" style="width:100%; height:80px; font-size:10px; margin-top:10px; border:1px solid #eee; color:#999;" readonly></textarea>
+        <div style="margin-top:10px">
+          <label style="font-size:11px;color:#999">Clique para ver o que o robô leu:</label>
+          <textarea id="ocr-debug" style="width:100%; height:60px; font-size:10px; border:1px solid #eee; color:#777;" readonly onclick="this.style.height='200px'"></textarea>
+        </div>
       </div>
     </div>
 
@@ -159,9 +162,9 @@ async function processarArquivo(inp) {
   try {
     let txt = inp.files[0].type=='application/pdf' ? await lerPDF(inp.files[0]) : await lerImagem(inp.files[0]);
     document.getElementById('ocr-debug').value = txt; 
-    document.getElementById('inp-sistema').value = analisarTextoMultiLinha(txt);
+    document.getElementById('inp-sistema').value = analisarTextoV5(txt);
     document.getElementById('ocr-result').classList.remove('hidden');
-  } catch(e){ console.log(e); alert('Erro. Tente manual.'); }
+  } catch(e){ console.log(e); alert('Erro ao ler. Digite o total manualmente.'); }
   finally { document.getElementById('ocr-loading').style.display='none'; }
 }
 
@@ -171,8 +174,7 @@ async function lerPDF(f) {
   for(let i=1;i<=pdf.numPages;i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    // Pulo do gato: Junta com quebra de linha para manter estrutura
-    t += content.items.map(s=>s.str).join("\n") + "\n"; 
+    t += content.items.map(s=>s.str).join(" ") + "\n"; 
   }
   return t;
 }
@@ -182,65 +184,52 @@ async function lerImagem(f) {
   await w.terminate(); return text;
 }
 
-// --- CÉREBRO 4.0 (RASTREADOR MULTI-LINHA) ---
-function analisarTextoMultiLinha(texto) {
+// --- CÉREBRO V5.0 (LEITOR UNIVERSAL) ---
+function analisarTextoV5(texto) {
   const linhas = texto.toUpperCase().split('\n');
   let total = 0;
   
-  for (let i = 0; i < linhas.length; i++) {
-    let l = linhas[i].trim();
-    if (l.length < 3) continue;
+  for (let linha of linhas) {
+    let l = linha.trim();
+    if (l.length < 5) continue; // Pula linhas muito curtas
 
-    // 1. Identifica se é um sanduíche válido
+    // 1. Identifica se é sanduíche
     let fator = 0;
-    // Pão 15cm (0.5)
     if (l.includes('SMART') || l.includes('15CM') || l.includes('ROYS FDS') || l.includes('PRA VALER') || l.includes('FRESH')) fator = 0.5;
-    // Pão 30cm (1.0)
     else if (l.includes('SUPER') || l.includes('30CM') || l.includes('DOUBLE') || l.includes('CRISPY') || l.includes('CREAM') || l.includes('ROYS FRANGO')) fator = 1.0;
-    // Pão Grande (2.0)
     else if (l.includes('BIG KING') || l.includes('MEGA') || l.includes('TRIO')) fator = 2.0;
-    
-    // Filtro extra: precisa ter ROYS ou COMBO ou nome de sanduíche
-    if (fator > 0 && (l.includes('ROYS') || l.includes('COMBO') || l.includes('SMASH') || l.includes('KING'))) {
+
+    // Precisa ter palavras chave de produto
+    if (fator > 0 && (l.includes('ROYS') || l.includes('COMBO') || l.includes('SMASH') || l.includes('KING') || l.includes('TRIO') || l.includes('FRESH'))) {
       
-      // 2. Tenta achar a quantidade NA MESMA LINHA
-      // Procura: numero pequeno (1-50) seguido de espaço e numero grande (preço)
-      // Ex: "4 69,60"
-      let match = l.match(/(\d+)\s+[\d.,]{3,}/);
-      let qtd = 0;
-
-      if (match) {
-        qtd = parseInt(match[1]);
-      } else {
-        // 3. Se não achou, OLHA A PRÓXIMA LINHA (comum em PDF)
-        // Às vezes a quantidade cai pra linha de baixo sozinha
-        if (i + 1 < linhas.length) {
-            let proxLinha = linhas[i+1].trim();
-            // Verifica se a próxima linha é SÓ um número (ex: "4")
-            if (/^\d+$/.test(proxLinha)) {
-                qtd = parseInt(proxLinha);
+      // 2. Extrai TODOS os números da linha
+      // Regex pega números inteiros isolados
+      const numeros = l.match(/\b\d+\b/g);
+      
+      if (numeros) {
+        let qtdEncontrada = 0;
+        
+        // Vamos testar cada número encontrado na linha
+        for (let numStr of numeros) {
+          let n = parseInt(numStr);
+          
+          // Filtra: Quantidade deve ser > 0 e < 60
+          // Se for código de produto (ex: 158, 305, 362), geralmente é > 100
+          if (n > 0 && n < 60) {
+            qtdEncontrada = n;
+            // Se achou um número válido, verifica se não é o código no início da linha
+            // Ex: "4 ROYS..." (4 é qtd) vs "158 ROYS..." (158 é código)
+            if (l.startsWith(numStr)) {
+               // Se está no começo, só aceitamos se for pequeno (tipo até 10)
+               // Se for 158, ignora. Se for 4, aceita.
             }
+          }
         }
-      }
-
-      // TRAVA DE SEGURANÇA:
-      // Ignora se o número for código de produto (ex: 158, 305)
-      // Assume que ninguém pede mais de 60 sanduíches iguais num cupom
-      if (qtd > 0 && qtd < 60) {
-         // Verifica se a linha começa com esse numero (pode ser código)
-         // Se a linha começa com "158" e a qtd achada for 158, ignora.
-         if (!l.startsWith(qtd.toString())) {
-             total += qtd * fator;
-         } else {
-             // Se achou no meio ou fim, aceita
-             // Ex: "158 ROYS... 4" -> qtd 4 é segura
-             // Mas se leu o código "158" como qtd, ignoramos acima,
-             // a não ser que tenhamos achado na próxima linha.
-             if (l.match(/\d+$/)) { // Numero no fim da linha
-                 let fim = parseInt(l.match(/(\d+)$/)[1]);
-                 if(fim < 60) total += fim * fator;
-             }
-         }
+        
+        // Se achou alguma quantidade válida nessa linha, soma
+        if (qtdEncontrada > 0) {
+          total += qtdEncontrada * fator;
+        }
       }
     }
   }
