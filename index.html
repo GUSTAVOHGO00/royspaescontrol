@@ -21,6 +21,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'DM Sans', sans-serif; background-color: var(--bg); color: var(--text); padding-bottom: 90px; }
 
+  /* CABEÇALHO */
   .header { background: white; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; }
   .logo-area { display: flex; align-items: center; gap: 10px; }
   .logo-img { height: 40px; width: auto; }
@@ -28,21 +29,25 @@
   .app-title p { font-size: 12px; color: var(--blue); font-weight: 500; }
   .btn-icon { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text); }
 
+  /* CONTAINER E CARDS */
   .container { padding: 20px; max-width: 600px; margin: 0 auto; }
   .card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #EDF2F7; }
   h2 { font-size: 14px; text-transform: uppercase; color: var(--gray); font-weight: 700; margin-bottom: 12px; letter-spacing: 0.5px; }
 
+  /* INPUTS */
   .form-group { margin-bottom: 15px; }
   label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #4A5568; }
   input, select, textarea { width: 100%; padding: 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-size: 16px; font-family: inherit; background: #FAFAFA; }
   input:focus, select:focus { outline: none; border-color: var(--blue); background: white; }
 
+  /* LISTA DE PÃES */
   .bread-row { background: #F7FAFC; border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid #EDF2F7; }
   .bread-row-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 14px; }
   .bread-equiv { font-size: 12px; background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; }
   .bread-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .bread-col span { display: block; font-size: 10px; color: var(--gray); font-weight: 700; text-align: center; margin-bottom: 4px; }
 
+  /* BOTÕES */
   .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s; }
   .btn:active { transform: scale(0.98); }
   .btn-primary { background: var(--red); color: white; margin-top: 10px; }
@@ -50,6 +55,7 @@
   .btn-camera { background: #2D3748; color: white; margin-bottom: 10px; }
   .fab { position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px; background: var(--red); color: white; border-radius: 50%; font-size: 30px; border: none; box-shadow: 0 4px 15px rgba(227,6,19,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 99; }
 
+  /* STATUS E TAGS */
   .result-box { text-align: center; padding: 25px; border-radius: 16px; color: white; margin-top: 20px; }
   .status-verde { background: linear-gradient(135deg, #48BB78, #2F855A); }
   .status-amarelo { background: linear-gradient(135deg, #ECC94B, #D69E2E); color: #333; }
@@ -58,11 +64,13 @@
   .tag-ok { background: #C6F6D5; color: #22543D; }
   .tag-erro { background: #FED7D7; color: #822727; }
 
+  /* HISTÓRICO */
   .history-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #CBD5E0; box-shadow: 0 2px 5px rgba(0,0,0,0.03); cursor: pointer; }
   .history-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray); font-weight: 700; margin-bottom: 5px; }
   .history-main { display: flex; justify-content: space-between; align-items: center; }
   .history-unit { font-weight: 700; color: var(--text); }
 
+  /* UTILITÁRIOS */
   .hidden { display: none !important; }
   .loading { text-align: center; padding: 20px; }
   .spinner { width: 30px; height: 30px; border: 3px solid #E2E8F0; border-top: 3px solid var(--blue); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 10px; }
@@ -115,7 +123,7 @@
       <p style="font-size:13px; color:#718096; margin-bottom:15px;">Selecione o <b>PDF</b> ou tire foto.</p>
       <input type="file" id="file-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)">
       <button class="btn btn-camera" onclick="document.getElementById('file-input').click()">📁 Abrir PDF ou 📸 Foto</button>
-      <div id="ocr-loading" class="loading hidden"><div class="spinner"></div><span>Analisando arquivo...</span></div>
+      <div id="ocr-loading" class="loading hidden"><div class="spinner"></div><span>Otimizando imagem e lendo...</span></div>
       <div id="ocr-result" class="hidden">
         <div class="form-group" style="margin-top:10px">
           <label>Total Sistema (Pães 30cm)</label>
@@ -158,6 +166,8 @@
     </div>
 </div>
 
+<canvas id="canvas-ocr" style="display:none;"></canvas>
+
 <script>
 const CATEGORIAS = [
   {id:'abertura', label:'A) Abertura'}, {id:'assados', label:'B) Assados/Produzidos'},
@@ -187,14 +197,21 @@ function updManual(id,t,v) {
   document.getElementById('manual-total').innerText = calc('abertura')+calc('assados')-calc('desperdicio')-calc('cortesia')-calc('sobra');
 }
 
-// --- LEITOR V12 (COM BLACKLIST) ---
+// --- LEITOR V13 (PHOTO BOOSTER) ---
 async function processarArquivo(inp) {
   if(!inp.files[0]) return;
   document.getElementById('ocr-loading').classList.remove('hidden');
   document.getElementById('ocr-result').classList.add('hidden');
   try {
-    let txt = inp.files[0].type=='application/pdf' ? await lerPDF(inp.files[0]) : await lerImagem(inp.files[0]);
-    const res = analisarTextoV12(txt);
+    let txt = "";
+    if (inp.files[0].type === 'application/pdf') {
+        txt = await lerPDF(inp.files[0]);
+    } else {
+        // Pré-processamento de imagem para alto contraste
+        const processedImg = await preprocessImage(inp.files[0]);
+        txt = await lerImagem(processedImg);
+    }
+    const res = analisarTextoV13(txt);
     document.getElementById('inp-sistema').value = res.total;
     itensSistemaDetectados = res.itens;
     document.getElementById('lista-itens-ocr').innerHTML = res.itens.map(i => `<div style="border-bottom:1px solid #ddd;padding:2px"><b>${i.qtd}</b> x ${i.nome} <span style="float:right;color:#777">(${i.fator})</span></div>`).join('');
@@ -220,13 +237,55 @@ async function lerPDF(f) {
   }
   return fullText;
 }
-async function lerImagem(f) {
+
+// Melhoria de Imagem
+function preprocessImage(file) {
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.getElementById('canvas-ocr');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                
+                // Aumentar contraste e B&W
+                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const data = imgData.data;
+                for (let i = 0; i < data.length; i += 4) {
+                    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                    const color = avg > 120 ? 255 : 0; // Binarização simples
+                    data[i] = color;
+                    data[i + 1] = color;
+                    data[i + 2] = color;
+                }
+                ctx.putImageData(imgData, 0, 0);
+                resolve(canvas.toDataURL('image/png'));
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+async function lerImagem(imgSrc) {
   const w = await Tesseract.createWorker('por');
-  const {data:{text}} = await w.recognize(f);
+  // PSM 6 assume um bloco de texto uniforme (melhor para recibos que colunas)
+  await w.setParameters({
+    tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
+  });
+  const {data:{text}} = await w.recognize(imgSrc);
   await w.terminate(); return text;
 }
 
-function analisarTextoV12(texto) {
+function limparOCR(str) {
+    // Corrige erros comuns de OCR em numeros (l -> 1, O -> 0, etc)
+    return str.replace(/l/g, '1').replace(/I/g, '1').replace(/O/g, '0').replace(/o/g, '0').replace(/\$/g, '5');
+}
+
+function analisarTextoV13(texto) {
   const linhas = texto.toUpperCase().split('\n');
   let total = 0, itens = [], categoriaAtual = ""; 
 
@@ -234,7 +293,7 @@ function analisarTextoV12(texto) {
     let l = linha.trim();
     if (l.length < 3) continue;
 
-    // 1. BLACKLIST (Exclui Batatas, Saladas, Fresh Fit, etc)
+    // 1. BLACKLIST
     if (l.includes('BATATA') || l.includes('FRESH FIT') || l.includes('SALADA') || l.includes('BEBIDA') || l.includes('AGUA') || l.includes('SUCO') || l.includes('REFRI') || l.includes('MOUSSE') || l.includes('ADICIONAL') || l.includes('EMBALAGEM') || l.includes('CHIPS')) continue;
 
     // 2. Contexto de Categoria
@@ -245,6 +304,9 @@ function analisarTextoV12(texto) {
     else if (l === 'ROYS PRA VALER' || l === 'FDS') categoriaAtual = "IGNORAR";
     
     if (categoriaAtual === "IGNORAR") continue;
+
+    // Limpeza de números mal lidos
+    l = limparOCR(l);
 
     const regexQtdPreco = /(\d{1,2})\s+[\d.,]{3,}/g;
     let match;
@@ -264,7 +326,7 @@ function analisarTextoV12(texto) {
           } 
           else if (trechoAnterior.includes('ROYS FDS')) fator = 1.0;
           else if (trechoAnterior.includes('ROYS KIDS')) fator = 0.5;
-          // Fallback para sanduíches normais dentro de promoções (erro comum de PDF)
+          // Fallback
           else if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM')) fator = 0.5;
           else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM')) fator = 1.0;
       } 
