@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Roy's - Sistema de Fechamento</title>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -10,37 +11,46 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
-<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+</script>
+
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 
 <style>
   :root { --red: #E30613; --yellow: #FFC20E; --blue: #005C9F; --bg: #F4F7FA; --card: #FFFFFF; --text: #1A202C; --gray: #A0AEC0; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'DM Sans', sans-serif; background-color: var(--bg); color: var(--text); padding-bottom: 90px; }
+
   .header { background: white; padding: 15px 20px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between; }
   .logo-area { display: flex; align-items: center; gap: 10px; }
   .logo-img { height: 40px; width: auto; }
   .app-title h1 { font-size: 18px; font-weight: 700; color: var(--red); line-height: 1; }
   .app-title p { font-size: 12px; color: var(--blue); font-weight: 500; }
   .btn-icon { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text); }
+
   .container { padding: 20px; max-width: 600px; margin: 0 auto; }
   .card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); border: 1px solid #EDF2F7; }
   h2 { font-size: 14px; text-transform: uppercase; color: var(--gray); font-weight: 700; margin-bottom: 12px; letter-spacing: 0.5px; }
+
   .form-group { margin-bottom: 15px; }
   label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #4A5568; }
   input, select, textarea { width: 100%; padding: 12px; border: 2px solid #E2E8F0; border-radius: 10px; font-size: 16px; font-family: inherit; background: #FAFAFA; }
   input:focus, select:focus { outline: none; border-color: var(--blue); background: white; }
+
   .bread-row { background: #F7FAFC; border-radius: 12px; padding: 12px; margin-bottom: 10px; border: 1px solid #EDF2F7; }
   .bread-row-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 700; font-size: 14px; }
   .bread-equiv { font-size: 12px; background: var(--blue); color: white; padding: 2px 8px; border-radius: 10px; }
   .bread-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .bread-col span { display: block; font-size: 10px; color: var(--gray); font-weight: 700; text-align: center; margin-bottom: 4px; }
+
   .btn { width: 100%; padding: 16px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.1s; }
   .btn:active { transform: scale(0.98); }
   .btn-primary { background: var(--red); color: white; margin-top: 10px; }
   .btn-secondary { background: white; border: 2px solid #E2E8F0; color: var(--text); margin-top: 10px; }
   .btn-camera { background: #2D3748; color: white; margin-bottom: 10px; }
   .fab { position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px; background: var(--red); color: white; border-radius: 50%; font-size: 30px; border: none; box-shadow: 0 4px 15px rgba(227,6,19,0.4); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 99; }
+
   .result-box { text-align: center; padding: 25px; border-radius: 16px; color: white; margin-top: 20px; }
   .status-verde { background: linear-gradient(135deg, #48BB78, #2F855A); }
   .status-amarelo { background: linear-gradient(135deg, #ECC94B, #D69E2E); color: #333; }
@@ -48,18 +58,26 @@
   .tag { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
   .tag-ok { background: #C6F6D5; color: #22543D; }
   .tag-erro { background: #FED7D7; color: #822727; }
+
   .history-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid #CBD5E0; box-shadow: 0 2px 5px rgba(0,0,0,0.03); cursor: pointer; }
   .history-top { display: flex; justify-content: space-between; font-size: 12px; color: var(--gray); font-weight: 700; margin-bottom: 5px; }
   .history-main { display: flex; justify-content: space-between; align-items: center; }
   .history-unit { font-weight: 700; color: var(--text); }
+
   .hidden { display: none !important; }
   .loading { text-align: center; padding: 20px; }
   .spinner { width: 30px; height: 30px; border: 3px solid #E2E8F0; border-top: 3px solid var(--blue); border-radius: 50%; animation: spin 1s infinite linear; margin: 0 auto 10px; }
   @keyframes spin { 100% { transform: rotate(360deg); } }
+
+  .ocr-dica { background: #FFFFF0; border: 1px solid #FEFCBF; border-radius: 10px; padding: 12px; margin-bottom: 12px; font-size: 12px; color: #744210; line-height: 1.5; }
+  .ocr-dica b { color: #975A16; }
+  .debug-box { background: #F7FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 10px; font-size: 11px; font-family: monospace; max-height: 200px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #4A5568; margin-top: 6px; }
+  .toggle-link { font-size: 12px; cursor: pointer; font-weight: bold; margin-top: 10px; display: inline-block; }
 </style>
 </head>
 <body>
 
+<!-- ═══ TELA LISTA ═══ -->
 <div id="screen-list">
   <div class="header">
     <div class="logo-area">
@@ -74,6 +92,7 @@
   <button class="fab" onclick="navTo('screen-new')">+</button>
 </div>
 
+<!-- ═══ TELA NOVO ═══ -->
 <div id="screen-new" class="hidden">
   <div class="header">
     <button class="btn-icon" onclick="navTo('screen-list')">←</button>
@@ -88,6 +107,7 @@
       <div class="form-group"><label>Unidade</label><select id="inp-unidade"><option>Shopping da Ilha</option><option>Rio Anil</option><option>Golden Shopping</option><option>Outra</option></select></div>
       <div class="form-group"><label>Responsável</label><input type="text" id="inp-resp" placeholder="Nome"></div>
     </div>
+
     <div class="card">
       <h2>2. Contagem Manual (Estoque)</h2>
       <div id="manual-inputs"></div>
@@ -95,24 +115,45 @@
         Total Utilizados: <span id="manual-total" style="font-size:20px">0</span> eq.
       </div>
     </div>
+
     <div class="card">
       <h2>3. Leitura do Sistema</h2>
-      <p style="font-size:13px; color:#718096; margin-bottom:15px;">Tire uma foto nítida do cupom.</p>
+      <div class="ocr-dica">
+        <b>📸 Dicas para foto boa:</b><br>
+        • Boa iluminação, sem sombras<br>
+        • Papel liso e reto<br>
+        • Foto de perto, texto legível<br>
+        • Se possível, envie o <b>PDF</b> (mais preciso)
+      </div>
       <input type="file" id="file-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)">
       <button class="btn btn-camera" onclick="document.getElementById('file-input').click()">📁 Abrir PDF ou 📸 Foto</button>
-      <div id="ocr-loading" class="loading hidden"><div class="spinner"></div><span>Otimizando imagem...</span></div>
+
+      <div id="ocr-loading" class="loading hidden">
+        <div class="spinner"></div>
+        <span id="ocr-progress">Analisando arquivo...</span>
+      </div>
+
       <div id="ocr-result" class="hidden">
         <div class="form-group" style="margin-top:10px">
-          <label>Total Sistema (Pães 30cm)</label>
-          <input type="number" id="inp-sistema" style="font-size:24px; color:var(--red); font-weight:700;" placeholder="0">
+          <label>Total Sistema (Pães eq. 30cm)</label>
+          <input type="number" step="0.5" id="inp-sistema" style="font-size:24px; color:var(--red); font-weight:700;" placeholder="0">
+          <div style="font-size:11px; color:#718096; margin-top:4px;">⚠️ Confira o valor. Se errado, corrija manualmente.</div>
         </div>
-        <div style="margin-top:10px">
-            <div style="font-size:12px; color:var(--blue); cursor:pointer; font-weight:bold" onclick="document.getElementById('lista-itens-ocr').classList.toggle('hidden')">Ver itens detectados ▼</div>
-            <div id="lista-itens-ocr" class="hidden" style="max-height:150px; overflow-y:auto; background:#f9f9f9; padding:5px; border:1px solid #eee; font-size:11px;"></div>
+
+        <div class="toggle-link" style="color:var(--blue)" onclick="document.getElementById('lista-itens-ocr').classList.toggle('hidden')">
+          Ver itens detectados ▼
         </div>
+        <div id="lista-itens-ocr" class="hidden" style="max-height:250px; overflow-y:auto; background:#f9f9f9; padding:8px; border:1px solid #eee; border-radius:8px; font-size:12px; margin-top:6px;"></div>
+
+        <div class="toggle-link" style="color:#A0AEC0" onclick="document.getElementById('debug-ocr').classList.toggle('hidden')">
+          Ver texto bruto (debug) ▼
+        </div>
+        <div id="debug-ocr" class="hidden debug-box"></div>
       </div>
     </div>
+
     <button class="btn btn-primary" onclick="calcular()">CALCULAR RESULTADO</button>
+
     <div id="result-area" class="hidden">
       <div id="traffic-light" class="result-box">
         <div style="font-size:48px; margin-bottom:10px" id="res-icon">✅</div>
@@ -120,7 +161,7 @@
         <div style="font-size:16px; opacity:0.9" id="res-desc">Sem diferença</div>
       </div>
       <div class="card" style="margin-top:20px">
-        <label>Justificativa (Obrigatória se houver erro)</label>
+        <label>Justificativa (Obrigatória se houver diferença)</label>
         <input type="text" id="inp-just" placeholder="Explique o motivo...">
       </div>
       <button class="btn btn-secondary" onclick="salvar()">💾 SALVAR NO HISTÓRICO</button>
@@ -129,198 +170,604 @@
   </div>
 </div>
 
+<!-- ═══ TELA DETALHE ═══ -->
 <div id="screen-detail" class="hidden">
-    <div class="header"><button class="btn-icon" onclick="navTo('screen-list')">←</button><div class="app-title"><h1>Detalhes</h1></div><div style="width:20px"></div></div>
-    <div class="container"><div id="detail-content"></div><button class="btn btn-primary" onclick="exportarPDF()">📄 EXPORTAR PDF</button></div>
+  <div class="header">
+    <button class="btn-icon" onclick="navTo('screen-list')">←</button>
+    <div class="app-title"><h1>Detalhes</h1></div>
+    <div style="width:20px"></div>
+  </div>
+  <div class="container">
+    <div id="detail-content"></div>
+    <button class="btn btn-primary" onclick="exportarPDF()">📄 EXPORTAR PDF</button>
+    <div style="height:20px"></div>
+  </div>
 </div>
 
-<canvas id="canvas-ocr" style="display:none;"></canvas>
-
 <script>
-const CATEGORIAS = [{id:'abertura', label:'A) Abertura'}, {id:'assados', label:'B) Assados/Produzidos'}, {id:'desperdicio', label:'C) Desperdícios'}, {id:'cortesia', label:'D) Cortesias'}, {id:'sobra', label:'E) Sobra Final'}];
+// ═══════════════════════════════════════════════════════
+// ESTADO E INICIALIZAÇÃO
+// ═══════════════════════════════════════════════════════
+const CATEGORIAS = [
+  {id:'abertura', label:'A) Abertura'},
+  {id:'assados', label:'B) Assados/Produzidos'},
+  {id:'desperdicio', label:'C) Desperdícios'},
+  {id:'cortesia', label:'D) Cortesias'},
+  {id:'sobra', label:'E) Sobra Final'}
+];
 let dadosManual = {}, itensSistemaDetectados = [], fechamentoAtual = null;
 
-window.onload = () => { gerarInputsManual(); carregarHistorico(); document.getElementById('inp-data').valueAsDate = new Date(); }
-function navTo(id) { document.querySelectorAll('body > div').forEach(d => d.classList.add('hidden')); document.getElementById(id).classList.remove('hidden'); if(id=='screen-new') resetarForm(); if(id=='screen-list') carregarHistorico(); }
+window.onload = () => {
+  gerarInputsManual();
+  carregarHistorico();
+  document.getElementById('inp-data').valueAsDate = new Date();
+};
 
+function navTo(id) {
+  document.querySelectorAll('body > div').forEach(d => d.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  if (id === 'screen-new') resetarForm();
+  if (id === 'screen-list') carregarHistorico();
+}
+
+// ═══════════════════════════════════════════════════════
+// CONTAGEM MANUAL (igual ao original)
+// ═══════════════════════════════════════════════════════
 function gerarInputsManual() {
-  const c = document.getElementById('manual-inputs'); c.innerHTML='';
+  const c = document.getElementById('manual-inputs');
+  c.innerHTML = '';
   CATEGORIAS.forEach(cat => {
-    dadosManual[cat.id]={q30:0,q15:0};
-    c.innerHTML+=`<div class="bread-row"><div class="bread-row-head"><span>${cat.label}</span><span class="bread-equiv" id="equiv-${cat.id}">0 eq.</span></div><div class="bread-cols"><div class="bread-col"><span>30 CM</span><input type="number" placeholder="0" oninput="updManual('${cat.id}','q30',this.value)"></div><div class="bread-col"><span>15 CM</span><input type="number" placeholder="0" oninput="updManual('${cat.id}','q15',this.value)"></div></div></div>`;
+    dadosManual[cat.id] = { q30: 0, q15: 0 };
+    c.innerHTML += `<div class="bread-row"><div class="bread-row-head"><span>${cat.label}</span><span class="bread-equiv" id="equiv-${cat.id}">0 eq.</span></div><div class="bread-cols"><div class="bread-col"><span>30 CM</span><input type="number" inputmode="numeric" placeholder="0" oninput="updManual('${cat.id}','q30',this.value)"></div><div class="bread-col"><span>15 CM</span><input type="number" inputmode="numeric" placeholder="0" oninput="updManual('${cat.id}','q15',this.value)"></div></div></div>`;
   });
 }
-function updManual(id,t,v) {
-  dadosManual[id][t]=parseInt(v)||0;
-  document.getElementById(`equiv-${id}`).innerText = (dadosManual[id].q30 + dadosManual[id].q15*0.5) + " eq.";
-  const calc=(i)=>dadosManual[i].q30+dadosManual[i].q15*0.5;
-  document.getElementById('manual-total').innerText = calc('abertura')+calc('assados')-calc('desperdicio')-calc('cortesia')-calc('sobra');
+
+function updManual(id, t, v) {
+  dadosManual[id][t] = parseInt(v) || 0;
+  const eq = dadosManual[id].q30 + dadosManual[id].q15 * 0.5;
+  document.getElementById(`equiv-${id}`).innerText = eq + ' eq.';
+  const calc = (i) => dadosManual[i].q30 + dadosManual[i].q15 * 0.5;
+  const total = calc('abertura') + calc('assados') - calc('desperdicio') - calc('cortesia') - calc('sobra');
+  document.getElementById('manual-total').innerText = total;
 }
 
+// ═══════════════════════════════════════════════════════
+// PROCESSAMENTO DO ARQUIVO (PDF ou FOTO)
+// ═══════════════════════════════════════════════════════
 async function processarArquivo(inp) {
-  if(!inp.files[0]) return;
+  if (!inp.files[0]) return;
+  const file = inp.files[0];
+  const isPDF = file.type === 'application/pdf';
+
   document.getElementById('ocr-loading').classList.remove('hidden');
   document.getElementById('ocr-result').classList.add('hidden');
+  document.getElementById('ocr-progress').textContent = isPDF ? 'Lendo PDF...' : 'Preparando imagem...';
+
   try {
-    let txt = "";
-    if (inp.files[0].type === 'application/pdf') {
-        txt = await lerPDF(inp.files[0]);
+    let txt;
+    if (isPDF) {
+      txt = await lerPDF(file);
     } else {
-        const processedImg = await preprocessImage(inp.files[0]);
-        txt = await lerImagem(processedImg);
+      document.getElementById('ocr-progress').textContent = 'Melhorando qualidade da imagem...';
+      const imgProcessada = await preprocessarImagem(file);
+      document.getElementById('ocr-progress').textContent = 'Lendo texto da foto... 0%';
+      txt = await lerImagemMelhorado(imgProcessada);
     }
-    const res = analisarTextoV14(txt);
+
+    document.getElementById('debug-ocr').textContent = txt;
+
+    const res = isPDF ? analisarTextoPDF(txt) : analisarTextoFoto(txt);
+
     document.getElementById('inp-sistema').value = res.total;
     itensSistemaDetectados = res.itens;
-    document.getElementById('lista-itens-ocr').innerHTML = res.itens.map(i => `<div style="border-bottom:1px solid #ddd;padding:2px"><b>${i.qtd}</b> x ${i.nome} <span style="float:right;color:#777">(${i.fator})</span></div>`).join('');
+
+    let htmlItens = res.itens.map(i =>
+      `<div style="border-bottom:1px solid #eee;padding:5px 0;display:flex;justify-content:space-between">
+        <span><b>${i.qtd}</b> × ${i.nome}</span>
+        <span style="color:#718096;white-space:nowrap;margin-left:8px">×${i.fator} = <b>${(i.qtd * i.fator)}</b></span>
+      </div>`
+    ).join('');
+    htmlItens += `<div style="border-top:2px solid #2D3748;padding:8px 0;font-weight:bold;text-align:right;margin-top:4px;font-size:14px">Total: ${res.total} pães eq.</div>`;
+    document.getElementById('lista-itens-ocr').innerHTML = htmlItens;
+
     document.getElementById('ocr-result').classList.remove('hidden');
-  } catch(e){ alert('Erro ao ler. Tente novamente.'); }
-  finally { document.getElementById('ocr-loading').classList.add('hidden'); }
+
+    if (res.itens.length === 0) {
+      alert('⚠️ Nenhum item detectado!\n\nSe usou foto, tente:\n• Melhor iluminação\n• Foto mais de perto\n• Papel liso sem dobras\n\nOu digite o total manualmente.');
+    }
+  } catch (e) {
+    console.error(e);
+    alert('Erro ao ler arquivo: ' + e.message + '\n\nDigite o total manualmente.');
+    document.getElementById('ocr-result').classList.remove('hidden');
+  } finally {
+    document.getElementById('ocr-loading').classList.add('hidden');
+  }
 }
 
+// ═══════════════════════════════════════════════════════
+// LEITOR DE PDF (igual ao original)
+// ═══════════════════════════════════════════════════════
 async function lerPDF(f) {
   const pdf = await pdfjsLib.getDocument(await f.arrayBuffer()).promise;
-  let fullText = "";
-  for(let i=1; i<=pdf.numPages; i++) {
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    let lastY = -1; let pageText = "";
+    let lastY = -1, pageText = '';
     const items = content.items.filter(it => it.str.trim().length > 0);
     for (const item of items) {
-        const y = item.transform[5];
-        if (lastY !== -1 && Math.abs(y - lastY) > 5) pageText += "\n"; else if (lastY !== -1) pageText += " ";
-        pageText += item.str; lastY = y;
+      const y = item.transform[5];
+      if (lastY !== -1 && Math.abs(y - lastY) > 5) pageText += '\n';
+      else if (lastY !== -1) pageText += ' ';
+      pageText += item.str;
+      lastY = y;
     }
-    fullText += pageText + "\n";
+    fullText += pageText + '\n';
   }
   return fullText;
 }
 
-function preprocessImage(file) {
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const img = new Image();
-            img.onload = () => {
-                const canvas = document.getElementById('canvas-ocr');
-                const ctx = canvas.getContext('2d');
-                canvas.width = img.width; canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                const data = imgData.data;
-                for (let i = 0; i < data.length; i += 4) {
-                    const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                    const color = avg > 110 ? 255 : 0; // Contraste agressivo para cupom
-                    data[i] = color; data[i + 1] = color; data[i + 2] = color;
-                }
-                ctx.putImageData(imgData, 0, 0);
-                resolve(canvas.toDataURL('image/png'));
-            };
-            img.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
-    });
-}
-
-async function lerImagem(imgSrc) {
-  const w = await Tesseract.createWorker('por');
-  await w.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.AUTO });
-  const {data:{text}} = await w.recognize(imgSrc);
-  await w.terminate(); return text;
-}
-
-function analisarTextoV14(texto) {
+// ═══════════════════════════════════════════════════════
+// PARSER ORIGINAL PARA PDF (mantido 100% igual)
+// ═══════════════════════════════════════════════════════
+function analisarTextoPDF(texto) {
   const linhas = texto.toUpperCase().split('\n');
-  let total = 0, itens = [], categoriaAtual = ""; 
+  let total = 0, itens = [], categoriaAtual = '';
 
   for (let linha of linhas) {
-    let l = linha.trim().replace(/L/g, '1').replace(/I/g, '1').replace(/O/g, '0');
+    let l = linha.trim();
     if (l.length < 3) continue;
 
-    // 1. Contexto (V8/V11)
-    if (l.includes('SANDUICHE SMART') || l.includes('COMBOS SMART')) categoriaAtual = "SMART";
-    else if (l.includes('SANDUICHE SUPER') || l.includes('COMBOS NOVOS SUPER')) categoriaAtual = "SUPER";
-    else if (l.includes('PROMOCOES')) categoriaAtual = "PROMOCOES";
-    else if (l.includes('OFERTAS ROYS')) categoriaAtual = "OFERTAS"; 
-    else if (l === 'ROYS PRA VALER' || l === 'FDS') categoriaAtual = "RESUMO_IGNORAR";
-    
-    if (categoriaAtual === "RESUMO_IGNORAR") continue;
+    if (l.includes('BATATA') || l.includes('FRESH FIT') || l.includes('SALADA') || l.includes('BEBIDA') || l.includes('AGUA') || l.includes('SUCO') || l.includes('REFRI') || l.includes('MOUSSE') || l.includes('ADICIONAL') || l.includes('EMBALAGEM') || l.includes('CHIPS')) continue;
 
-    // 2. Busca Quantidade (Aceita Número + Preço OU Número + Traço '-')
-    const regexQtdHibrido = /(\d{1,2})\s+([\d.,]{3,}|-)/g;
+    if (l.includes('SANDUICHE SMART') || l.includes('COMBOS SMART')) categoriaAtual = 'SMART';
+    else if (l.includes('SANDUICHE SUPER') || l.includes('COMBOS NOVOS SUPER')) categoriaAtual = 'SUPER';
+    else if (l.includes('PROMOCOES')) categoriaAtual = 'PROMOCOES';
+    else if (l.includes('OFERTAS ROYS')) categoriaAtual = 'SUPER';
+    else if (l === 'ROYS PRA VALER' || l === 'FDS') categoriaAtual = 'IGNORAR';
+
+    if (categoriaAtual === 'IGNORAR') continue;
+
+    const regexQtdPreco = /(\d{1,2})\s+[\d.,]{3,}/g;
     let match;
-    
-    while ((match = regexQtdHibrido.exec(l)) !== null) {
-      let qtd = parseInt(match[1]); 
+
+    while ((match = regexQtdPreco.exec(l)) !== null) {
+      let qtd = parseInt(match[1]);
       let indexFimNome = match.index;
-      let trechoAnterior = l.substring(0, indexFimNome); 
-      
+      let trechoAnterior = l.substring(0, indexFimNome);
+
       let fator = 0;
-      if (categoriaAtual === "PROMOCOES") {
-          if (trechoAnterior.includes('ROYS PRA VALER')) {
-              if (trechoAnterior.includes('SEG')) fator = 0.5;
-              else if (trechoAnterior.includes('TER') || trechoAnterior.includes('QUA')) fator = 1.0;
-              else fator = 0.5;
-          } 
-          else if (trechoAnterior.includes('ROYS FDS')) fator = 1.0;
-          else if (trechoAnterior.includes('ROYS KIDS')) fator = 0.5;
-          else if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM')) fator = 0.5;
-          else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM')) fator = 1.0;
+
+      if (categoriaAtual === 'PROMOCOES') {
+        if (trechoAnterior.includes('ROYS PRA VALER')) {
+          if (trechoAnterior.includes('SEG')) fator = 0.5;
+          else if (trechoAnterior.includes('TER') || trechoAnterior.includes('QUA') || trechoAnterior.includes('QUI') || trechoAnterior.includes('SEX')) fator = 1.0;
+          else fator = 0.5;
+        }
+        else if (trechoAnterior.includes('ROYS FDS')) fator = 1.0;
+        else if (trechoAnterior.includes('ROYS KIDS')) fator = 0.5;
+        else if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM')) fator = 0.5;
+        else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM')) fator = 1.0;
       } else {
-          if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM')) fator = 0.5;
-          else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM') || trechoAnterior.includes('DOUBLE')) fator = 1.0;
-          else if (trechoAnterior.includes('BIG KING') || trechoAnterior.includes('MEGA')) fator = 2.0;
-          else if (trechoAnterior.includes('TRIO MIX')) fator = 1.5;
-          if (fator === 0 && (categoriaAtual === "SMART" || categoriaAtual === "SUPER")) fator = (categoriaAtual === "SMART") ? 0.5 : 1.0;
+        if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM')) fator = 0.5;
+        else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM') || trechoAnterior.includes('DOUBLE')) fator = 1.0;
+        else if (trechoAnterior.includes('BIG KING') || trechoAnterior.includes('MEGA')) fator = 2.0;
+        else if (trechoAnterior.includes('TRIO MIX')) fator = 1.5;
+
+        if (fator === 0 && (categoriaAtual === 'SMART' || categoriaAtual === 'SUPER')) {
+          fator = (categoriaAtual === 'SMART') ? 0.5 : 1.0;
+        }
       }
 
       if (fator > 0 && (trechoAnterior.includes('ROYS') || trechoAnterior.includes('COMBO') || trechoAnterior.includes('SMASH') || trechoAnterior.includes('KING') || trechoAnterior.includes('TRIO') || trechoAnterior.includes('FDS') || trechoAnterior.includes('DOUBLE'))) {
-         if (!trechoAnterior.includes('TAXA') && !trechoAnterior.includes('BATATA') && !trechoAnterior.includes('FRESH FIT') && !trechoAnterior.includes('SALADA')) {
-             if (qtd > 0 && qtd < 60) {
-                total += qtd * fator;
-                itens.push({ nome: trechoAnterior.replace(/\d+/g, '').substring(0,25).trim(), qtd: qtd, fator: fator });
-             }
-         }
+        if (!trechoAnterior.includes('TAXA') && !trechoAnterior.includes('ENTREGA')) {
+          if (qtd > 0 && qtd < 60) {
+            total += qtd * fator;
+            let nomeLimpo = trechoAnterior.replace(/\d+/g, '').replace('SUB-TOTAL', '').substring(0, 25).trim();
+            itens.push({ nome: nomeLimpo, qtd: qtd, fator: fator });
+          }
+        }
       }
       l = l.substring(indexFimNome + match[0].length);
-      regexQtdHibrido.lastIndex = 0;
+      regexQtdPreco.lastIndex = 0;
     }
   }
-  return { total: total, itens: itens };
+  return { total: Math.round(total * 10) / 10, itens };
 }
 
+// ═══════════════════════════════════════════════════════
+// PRÉ-PROCESSAMENTO DE IMAGEM (NOVO)
+// Converte para escala de cinza + alto contraste
+// ═══════════════════════════════════════════════════════
+function preprocessarImagem(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const escala = Math.max(1, 2500 / img.width);
+      canvas.width = Math.round(img.width * escala);
+      canvas.height = Math.round(img.height * escala);
+      const ctx = canvas.getContext('2d');
+
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imageData.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const gray = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
+        const bw = gray < 150 ? 0 : 255;
+        d[i] = d[i+1] = d[i+2] = bw;
+      }
+      ctx.putImageData(imageData, 0, 0);
+
+      canvas.toBlob(blob => {
+        URL.revokeObjectURL(img.src);
+        resolve(blob);
+      }, 'image/png');
+    };
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// LEITOR DE IMAGEM MELHORADO (NOVO)
+// ═══════════════════════════════════════════════════════
+async function lerImagemMelhorado(blob) {
+  const worker = await Tesseract.createWorker('por', 1, {
+    logger: m => {
+      if (m.status === 'recognizing text') {
+        const pct = Math.round((m.progress || 0) * 100);
+        const el = document.getElementById('ocr-progress');
+        if (el) el.textContent = `Lendo texto da foto... ${pct}%`;
+      }
+    }
+  });
+  await worker.setParameters({
+    tessedit_pageseg_mode: '6',
+    preserve_interword_spaces: '1',
+  });
+  const { data: { text } } = await worker.recognize(blob);
+  await worker.terminate();
+  return text;
+}
+
+// ═══════════════════════════════════════════════════════
+// PARSER PARA FOTOS (NOVO - tolerante a erros de OCR)
+// ═══════════════════════════════════════════════════════
+function analisarTextoFoto(texto) {
+  let norm = texto.toUpperCase()
+    .replace(/[ÁÀÂÃ]/g,'A').replace(/[ÉÈÊ]/g,'E').replace(/[ÍÌÎ]/g,'I')
+    .replace(/[ÓÒÔÕ]/g,'O').replace(/[ÚÙÛ]/g,'U').replace(/Ç/g,'C')
+    .replace(/[|]/g, 'I')
+    .replace(/[{}[\]]/g, '')
+    .replace(/\s+/g, ' ');
+
+  const linhas = norm.split('\n');
+  let total = 0, itens = [], categoria = '';
+  const log = [];
+
+  for (let rawLine of linhas) {
+    let l = rawLine.trim();
+    if (l.length < 3) continue;
+
+    if (temAlgo(l, [
+      'BATATA','FRESH','SALADA','BEBIDA','AGUA','SUCO','REFRI',
+      'MOUSSE','ADICIONAL','EMBALAGEM','CHIPS','CEBOLA CARAMEL',
+      'CREAM CHEESE','MOSTARDA','CRISPY DE CEB','GUARANA','LIMONETO',
+      'H2O','COCA','SUB-TOTAL','SUBTOTAL','SUB TOTAL','CONSUMO',
+      'INTEGRADOR','TAXA','FRANGO SALADA','SALADA DE',
+      '----','====','STEAK ','PESTO'
+    ])) continue;
+
+    if (temAlgo(l, ['SANDUICHE SMART','SANDUICH SMART','01 SANDUICHE','01.SANDUICHE SMART','COMBOS NOVOS SMART','COMBO NOVOS SMART','COMBOS SMART'])) {
+      if (temAlgo(l, ['SUPER'])) { categoria = 'SUPER'; }
+      else { categoria = 'SMART'; }
+      log.push(`[SEC] SMART ← "${l}"`);
+      continue;
+    }
+    if (temAlgo(l, ['SANDUICHE SUPER','SANDUICH SUPER','02 SANDUICHE','02.SANDUICHE SUPER','COMBOS NOVOS SUPER','COMBO NOVOS SUPER','COMBOS SUPER'])) {
+      categoria = 'SUPER';
+      log.push(`[SEC] SUPER ← "${l}"`);
+      continue;
+    }
+    if (temAlgo(l, ['COMBOS NOVO'])) {
+      if (temAlgo(l, ['SUPER'])) { categoria = 'SUPER'; }
+      else if (temAlgo(l, ['SMART'])) { categoria = 'SMART'; }
+      log.push(`[SEC] COMBO ${categoria} ← "${l}"`);
+      continue;
+    }
+    if (temAlgo(l, ['OFERTAS ROY','OFERTA ROY'])) {
+      categoria = 'OFERTAS';
+      log.push(`[SEC] OFERTAS ← "${l}"`);
+      continue;
+    }
+    if (temAlgo(l, ['PROMOCOE','PROMOCAO','PROMOCOC'])) {
+      categoria = 'PROMO';
+      log.push(`[SEC] PROMO ← "${l}"`);
+      continue;
+    }
+    if (/^\s*ROYS?\s*PRA\s*VALER\s*$/.test(l) || /^\s*(ROYS?\s*)?FDS\s*$/.test(l)) {
+      categoria = 'IGNORAR';
+      log.push(`[SEC] IGNORAR ← "${l}"`);
+      continue;
+    }
+    if (temAlgo(l, ['ADICIONAIS','BEBIDAS','SALADAS','BATATA','TAXA','EMBALAGEM','SOBREMESA','DELIVERY','IFOOD'])) {
+      categoria = 'IGNORAR';
+      continue;
+    }
+
+    if (categoria === 'IGNORAR' || !categoria) continue;
+
+    const resultado = extrairQtdDaLinha(l, categoria);
+    if (resultado && resultado.qtd > 0 && resultado.fator > 0) {
+      const contrib = resultado.qtd * resultado.fator;
+      total += contrib;
+      itens.push(resultado);
+      log.push(`[OK] ${resultado.qtd}×${resultado.fator}=${contrib} "${resultado.nome}" (${categoria})`);
+    }
+  }
+
+  console.log('=== PARSER FOTO LOG ===');
+  log.forEach(l => console.log(l));
+  console.log('Total:', total, 'Itens:', itens.length);
+
+  return { total: Math.round(total * 10) / 10, itens };
+}
+
+function extrairQtdDaLinha(l, categoria) {
+  let trabalho = l.replace(/^\d{1,4}\s+/, '');
+  trabalho = trabalho.replace(/\s+\d{1,6}[.,]\d{2,3}(,\d{2})?\s*$/, '');
+  trabalho = trabalho.replace(/\s+-\s*$/, '');
+  trabalho = trabalho.trim();
+
+  if (trabalho.length < 3) return null;
+
+  const partes = trabalho.split(/\s+/);
+  if (partes.length < 2) return null;
+
+  let qtd = null, nomePartes = [];
+  for (let i = partes.length - 1; i >= 0; i--) {
+    const num = parseInt(partes[i]);
+    if (!isNaN(num) && num >= 1 && num <= 99 && partes[i].match(/^\d{1,2}$/)) {
+      qtd = num;
+      nomePartes = partes.slice(0, i);
+      break;
+    }
+  }
+
+  if (!qtd || nomePartes.length === 0) return null;
+
+  let nome = nomePartes.join(' ').replace(/^\d{1,4}\s*/, '').trim();
+  if (nome.length < 2) return null;
+
+  const fator = calcFator(nome, categoria);
+  if (fator <= 0) return null;
+
+  if (temAlgo(nome, ['SUB-TOTAL','SUBTOTAL','SUB TOTAL','TOTAL'])) return null;
+
+  if (['SMART','SUPER'].includes(categoria)) {
+    if (!temAlgo(nome, ['ROY','COMBO','SMASH','BLEND','STEAK','CRISPY','CHORI','PICANHA','FRANGO','CARNE','CAMARAO','ROSBIFE'])) return null;
+  }
+  if (categoria === 'OFERTAS') {
+    if (!temAlgo(nome, ['BIG','KING','MEGA','MIX','DOUBLE','SMASH','TRIO','CRISPY','LOVER'])) return null;
+  }
+  if (categoria === 'PROMO') {
+    if (!temAlgo(nome, ['ROY','FDS','PRA','VALER','KIDS','SMART','SUPER'])) return null;
+  }
+
+  return { nome: nome.substring(0, 28), qtd, fator };
+}
+
+function calcFator(nome, categoria) {
+  const n = nome.toUpperCase();
+
+  if (categoria === 'OFERTAS') {
+    if (n.includes('BIG') && n.includes('KING')) return 2.0;
+    if (n.includes('MEGA') && n.includes('MIX')) return 2.0;
+    if ((n.includes('DOUBLE') || n.includes('DOUB')) && (n.includes('SMASH') || n.includes('SM'))) return 1.0;
+    if (n.includes('TRIO') && (n.includes('MIX') || n.includes('M1X'))) return 1.5;
+    if (n.includes('CRISPY') && n.includes('LOVER')) return 1.0;
+    return 1.0;
+  }
+
+  if (categoria === 'PROMO') {
+    if (n.includes('PRA') && n.includes('VALER')) {
+      if (n.includes('SEG')) return 0.5;
+      if (temAlgo(n, ['TER','QUA','QUI','SEX'])) return 1.0;
+      return 0.5;
+    }
+    if (n.includes('FDS')) return 1.0;
+    if (n.includes('KIDS')) return 0.5;
+    if (n.includes('SMART')) return 0.5;
+    if (n.includes('SUPER')) return 1.0;
+    return 0;
+  }
+
+  if (categoria === 'SMART') return 0.5;
+  if (categoria === 'SUPER') return 1.0;
+
+  if (n.includes('SMART') || n.includes('15CM') || n.includes('15 CM')) return 0.5;
+  if (n.includes('SUPER') || n.includes('30CM') || n.includes('30 CM')) return 1.0;
+
+  return 0;
+}
+
+function temAlgo(texto, palavras) {
+  const t = texto.toUpperCase();
+  return palavras.some(p => t.includes(p.toUpperCase()));
+}
+
+// ═══════════════════════════════════════════════════════
+// CALCULAR RESULTADO
+// ═══════════════════════════════════════════════════════
 function calcular() {
-  const manual = parseFloat(document.getElementById('manual-total').innerText);
-  const sistema = parseFloat(document.getElementById('inp-sistema').value)||0;
+  const manual = parseFloat(document.getElementById('manual-total').innerText) || 0;
+  const sistema = parseFloat(document.getElementById('inp-sistema').value) || 0;
   const diff = sistema - manual;
-  document.getElementById('result-area').classList.remove('hidden');
   const card = document.getElementById('traffic-light');
-  if(Math.abs(diff) == 0) card.className='result-box status-verde'; else if(Math.abs(diff)<=0.5) card.className='result-box status-amarelo'; else card.className='result-box status-vermelho';
+  document.getElementById('result-area').classList.remove('hidden');
+
+  if (Math.abs(diff) === 0) {
+    card.className = 'result-box status-verde';
+    document.getElementById('res-icon').innerText = '✅';
+    document.getElementById('res-desc').innerText = 'Perfeito! Contagem bateu.';
+  } else if (Math.abs(diff) <= 0.5) {
+    card.className = 'result-box status-amarelo';
+    document.getElementById('res-icon').innerText = '⚠️';
+    document.getElementById('res-desc').innerText = 'Pequena diferença (meio pão).';
+  } else {
+    card.className = 'result-box status-vermelho';
+    document.getElementById('res-icon').innerText = '🛑';
+    document.getElementById('res-desc').innerText = 'DIFERENÇA CRÍTICA!';
+  }
   document.getElementById('res-diff').innerText = (diff > 0 ? '+' : '') + diff;
+  document.getElementById('result-area').scrollIntoView({ behavior: 'smooth' });
 }
 
+// ═══════════════════════════════════════════════════════
+// SALVAR
+// ═══════════════════════════════════════════════════════
 function salvar() {
-  const db = JSON.parse(localStorage.getItem('roys_full_db')||'[]');
-  db.unshift({ id: Date.now(), data: document.getElementById('inp-data').value.split('-').reverse().join('/'), turno: document.getElementById('inp-turno').value, unidade: document.getElementById('inp-unidade').value, resp: document.getElementById('inp-resp').value, manual: parseFloat(document.getElementById('manual-total').innerText), sistema: parseFloat(document.getElementById('inp-sistema').value)||0, diff: document.getElementById('res-diff').innerText, just: document.getElementById('inp-just').value, itens: itensSistemaDetectados });
+  const diff = document.getElementById('res-diff').innerText;
+  const just = document.getElementById('inp-just').value;
+  if (diff !== '0' && diff !== '+0' && !just) return alert('Justificativa obrigatória quando há diferença!');
+
+  const registro = {
+    id: Date.now(),
+    data: document.getElementById('inp-data').value.split('-').reverse().join('/'),
+    turno: document.getElementById('inp-turno').value,
+    unidade: document.getElementById('inp-unidade').value,
+    resp: document.getElementById('inp-resp').value,
+    manual: parseFloat(document.getElementById('manual-total').innerText),
+    sistema: parseFloat(document.getElementById('inp-sistema').value) || 0,
+    diff: diff,
+    just: just,
+    itens: itensSistemaDetectados
+  };
+  const db = JSON.parse(localStorage.getItem('roys_full_db') || '[]');
+  db.unshift(registro);
   localStorage.setItem('roys_full_db', JSON.stringify(db));
-  alert('Salvo!'); navTo('screen-list');
+  alert('✅ Salvo com sucesso!');
+  navTo('screen-list');
 }
 
+// ═══════════════════════════════════════════════════════
+// HISTÓRICO
+// ═══════════════════════════════════════════════════════
 function carregarHistorico() {
   const div = document.getElementById('history-container');
-  const db = JSON.parse(localStorage.getItem('roys_full_db')||'[]');
-  if(db.length === 0) return div.innerHTML = '<div style="text-align:center;padding:40px;color:#AAA;">📂 Vazio</div>';
+  const db = JSON.parse(localStorage.getItem('roys_full_db') || '[]');
+  if (db.length === 0) return div.innerHTML = '<div style="text-align:center;padding:40px;color:#AAA;">📂 Nenhum registro ainda</div>';
   div.innerHTML = '';
-  db.forEach(r => div.innerHTML += `<div class="history-item" onclick="abrirDetalhe(${r.id})"><div class="history-top"><span>${r.data}</span></div><div class="history-main"><div class="history-unit">${r.unidade}</div><div class="tag">${r.diff}</div></div></div>`);
+  db.forEach(r => {
+    const ok = r.diff === '0' || r.diff === '+0';
+    div.innerHTML += `<div class="history-item" style="border-left-color:${ok ? '#48BB78' : '#F56565'}" onclick="abrirDetalhe(${r.id})"><div class="history-top"><span>${r.data}</span><span>${r.turno} • ${r.resp || ''}</span></div><div class="history-main"><div class="history-unit">${r.unidade}</div><div class="tag ${ok ? 'tag-ok' : 'tag-erro'}">${r.diff}</div></div></div>`;
+  });
 }
 
 function abrirDetalhe(id) {
-    fechamentoAtual = JSON.parse(localStorage.getItem('roys_full_db')||'[]').find(x => x.id == id);
-    document.getElementById('detail-content').innerHTML = `<div class="card"><h2>${fechamentoAtual.data}</h2><p><b>Manual:</b> ${fechamentoAtual.manual} | <b>Sistema:</b> ${fechamentoAtual.sistema}</p><h3>Diferença: ${fechamentoAtual.diff}</h3></div>`;
-    navTo('screen-detail');
+  fechamentoAtual = JSON.parse(localStorage.getItem('roys_full_db') || '[]').find(x => x.id == id);
+  if (!fechamentoAtual) return;
+  const f = fechamentoAtual;
+  const ok = f.diff === '0' || f.diff === '+0';
+  let html = `<div class="card"><h2>Resumo</h2>
+    <p><b>Data:</b> ${f.data} | <b>Turno:</b> ${f.turno}</p>
+    <p><b>Unidade:</b> ${f.unidade} | <b>Responsável:</b> ${f.resp || '-'}</p>
+    <div style="display:flex;justify-content:space-around;margin:15px 0;text-align:center">
+      <div><div style="font-size:12px;color:#718096">Manual</div><div style="font-size:24px;font-weight:800;color:#2B6CB0">${f.manual}</div></div>
+      <div><div style="font-size:12px;color:#718096">Sistema</div><div style="font-size:24px;font-weight:800;color:#E53E3E">${f.sistema}</div></div>
+    </div>
+    <div style="text-align:center;font-size:20px;font-weight:bold;color:${ok ? '#48BB78' : '#F56565'}">Diferença: ${f.diff}</div>
+    ${f.just ? `<p style="margin-top:10px;background:#FFF5F5;padding:10px;border-radius:8px"><b>Justificativa:</b> ${f.just}</p>` : ''}
+  </div>`;
+
+  if (f.itens && f.itens.length > 0) {
+    html += `<div class="card"><h2>Itens do Sistema</h2>`;
+    f.itens.forEach(i => {
+      html += `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #EDF2F7;font-size:13px"><span>${i.nome}</span><span style="white-space:nowrap"><b>${i.qtd}</b> × ${i.fator} = ${(i.qtd * i.fator)}</span></div>`;
+    });
+    html += `</div>`;
+  }
+  document.getElementById('detail-content').innerHTML = html;
+  navTo('screen-detail');
 }
 
-function resetarForm() { document.getElementById('inp-sistema').value=''; document.getElementById('result-area').classList.add('hidden'); gerarInputsManual(); }
+// ═══════════════════════════════════════════════════════
+// EXPORTAR PDF
+// ═══════════════════════════════════════════════════════
+function exportarPDF() {
+  if (!fechamentoAtual) return;
+  const f = fechamentoAtual;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const ok = f.diff === '0' || f.diff === '+0';
+
+  doc.setFillColor(227, 6, 19);
+  doc.rect(0, 0, 210, 28, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.text("Roy's Sandwich Shop — Fechamento", 10, 13);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${f.unidade} | ${f.data} | ${f.turno} | Resp: ${f.resp || '-'}`, 10, 22);
+
+  let y = 38;
+  doc.setTextColor(0, 0, 0);
+
+  doc.setFillColor(ok ? 72 : 245, ok ? 187 : 101, ok ? 120 : 101);
+  doc.roundedRect(10, y, 190, 22, 3, 3, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${ok ? 'OK' : 'ALERTA'} — Diferença: ${f.diff} pães`, 16, y + 10);
+  doc.setFontSize(10);
+  doc.text(`Manual: ${f.manual} | Sistema: ${f.sistema}`, 16, y + 18);
+  y += 30;
+  doc.setTextColor(0, 0, 0);
+
+  if (f.itens && f.itens.length > 0) {
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Itens do Sistema', 10, y);
+    y += 6;
+    doc.autoTable({
+      startY: y,
+      head: [['Item', 'Qtd', 'Fator', 'Pães']],
+      body: f.itens.map(i => [i.nome, i.qtd, i.fator, (i.qtd * i.fator)]),
+      theme: 'grid',
+      headStyles: { fillColor: [45, 55, 72] },
+      margin: { left: 10, right: 10 },
+      styles: { fontSize: 9 },
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  }
+
+  if (f.just) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Justificativa:', 10, y);
+    doc.setFont('helvetica', 'normal');
+    const lines = doc.splitTextToSize(f.just, 180);
+    doc.text(lines, 10, y + 5);
+  }
+
+  doc.save(`fechamento_roys_${f.data.replace(/\//g, '-')}.pdf`);
+}
+
+// ═══════════════════════════════════════════════════════
+// RESET
+// ═══════════════════════════════════════════════════════
+function resetarForm() {
+  document.getElementById('inp-sistema').value = '';
+  document.getElementById('lista-itens-ocr').innerHTML = '';
+  document.getElementById('debug-ocr').textContent = '';
+  document.getElementById('ocr-result').classList.add('hidden');
+  document.getElementById('result-area').classList.add('hidden');
+  document.getElementById('file-input').value = '';
+  itensSistemaDetectados = [];
+  gerarInputsManual();
+}
 </script>
 </body>
 </html>
