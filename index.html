@@ -98,7 +98,7 @@
 
     <div class="card">
       <h2>3. Leitura do Sistema</h2>
-      <p style="font-size:13px; color:#718096; margin-bottom:15px;">Dica: Prefira usar o PDF.</p>
+      <p style="font-size:13px; color:#718096; margin-bottom:15px;">Dica: Use PDF para melhor precisão.</p>
       <input type="file" id="camera-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)">
       <button class="btn btn-camera" onclick="document.getElementById('camera-input').click()">📁 Abrir PDF ou 📸 Foto</button>
 
@@ -110,8 +110,8 @@
           <input type="number" id="inp-sistema" style="font-size:24px; color:var(--red); font-weight:700;" placeholder="0">
         </div>
         <div style="margin-top:10px">
-          <label style="font-size:11px;color:#999">Resumo da leitura:</label>
-          <textarea id="ocr-debug" style="width:100%; height:60px; font-size:10px; border:1px solid #eee; color:#777;" readonly></textarea>
+          <label style="font-size:11px;color:#999">Resumo detalhado (Debug):</label>
+          <textarea id="ocr-debug" style="width:100%; height:60px; font-size:10px; border:1px solid #eee; color:#777;" readonly onclick="this.style.height='200px'"></textarea>
         </div>
       </div>
     </div>
@@ -161,8 +161,8 @@ async function processarArquivo(inp) {
   document.getElementById('ocr-result').classList.add('hidden');
   try {
     let txt = inp.files[0].type=='application/pdf' ? await lerPDF(inp.files[0]) : await lerImagem(inp.files[0]);
-    document.getElementById('ocr-debug').value = "Processando texto..."; 
-    const resultado = analisarTextoV6(txt);
+    // O texto vem "bagunçado" com colunas misturadas. O analisador vai corrigir.
+    const resultado = analisarTextoV7(txt);
     document.getElementById('inp-sistema').value = resultado.total;
     document.getElementById('ocr-debug').value = resultado.log; 
     document.getElementById('ocr-result').classList.remove('hidden');
@@ -176,6 +176,7 @@ async function lerPDF(f) {
   for(let i=1;i<=pdf.numPages;i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
+    // Junta tudo numa string só, mantendo espaços
     t += content.items.map(s=>s.str).join(" ") + "\n"; 
   }
   return t;
@@ -186,80 +187,82 @@ async function lerImagem(f) {
   await w.terminate(); return text;
 }
 
-// --- CÉREBRO V6.0 (COM MEMÓRIA DE CATEGORIA) ---
-function analisarTextoV6(texto) {
+// --- CÉREBRO V7.0 (SEPARADOR DE COLUNAS) ---
+function analisarTextoV7(texto) {
+  // Limpeza inicial: remove quebras de linha que não importam e padroniza espaços
+  // Mas vamos manter as linhas originais do PDF para análise
   const linhas = texto.toUpperCase().split('\n');
   let total = 0;
   let log = "";
   
-  // Estado: Categoria atual (para quando o nome do item for cortado)
-  // 0 = indefinido, 0.5 = Smart, 1.0 = Super/Normal
-  let fatorCategoriaAtual = 0; 
+  // Lista de códigos conhecidos ou padrão (3 digitos seguidos de nome)
+  // Como o PDF mistura colunas, vamos tentar "quebrar" a linha onde acharmos um código.
+  
+  // Vamos reconstruir o texto item por item
+  let itensEncontrados = [];
 
-  for (let i = 0; i < linhas.length; i++) {
-    let l = linhas[i].trim();
-    if (l.length < 3) continue;
+  for (let linha of linhas) {
+    let l = linha.trim();
+    if (l.length < 5) continue;
 
-    // 1. Detectar Cabeçalhos de Categoria (Atualiza a memória)
-    if (l.includes('SANDUICHE SMART') || l.includes('COMBOS SMART') || l.includes('COMBOS NOVOS SMART')) fatorCategoriaAtual = 0.5;
-    else if (l.includes('SANDUICHE SUPER') || l.includes('COMBOS NOVOS SUPER')) fatorCategoriaAtual = 1.0;
-    else if (l.includes('OFERTAS ROYS')) fatorCategoriaAtual = 1.0; // Padrão ofertas
-
-    // 2. Tentar identificar fator do ITEM específico
-    let fatorItem = 0;
+    // MAGIA: Regex que procura padrão de item:
+    // Codigo (opt) + Nome Sanduiche + Quantidade + Preço
+    // Ex: "158 ROYS FRANGO SMART 4 69,60"
+    // Ex: "305 DOUBLE SMASH 4 0,00"
     
-    // Regras de nome explícito
-    if (l.includes('SMART') || l.includes('15CM') || l.includes('SMAR ') || l.endsWith(' SM') || l.endsWith(' S')) fatorItem = 0.5;
-    else if (l.includes('SUPER') || l.includes('30CM') || l.includes('DOUBLE') || l.includes('CRISPY') || l.includes('CREAM') || l.includes('ROYS FRANGO') || l.includes('PICANHA')) fatorItem = 1.0;
-    else if (l.includes('BIG KING') || l.includes('MEGA') || l.includes('TRIO')) fatorItem = 2.0;
+    // Vamos tentar achar TODAS as ocorrências de itens na mesma linha misturada
+    // Regex explica:
+    // (\d{3})? -> Código opcional de 3 digitos
+    // \s* -> Espaços
+    // ([A-Z\s]+?) -> Nome do item (Letras e espaços, não guloso)
+    // \s+ -> Espaço obrigatório
+    // (\d{1,2}) -> Quantidade (1 ou 2 digitos)
+    // \s+ -> Espaço
+    // [\d.,]+ -> Preço
     
-    // Se não achou no nome, usa o da categoria memorizada
-    if (fatorItem === 0) fatorItem = fatorCategoriaAtual;
+    // Simplificando: vamos dividir a linha onde tiver "Preço". O preço sempre termina com ,00 ou ,XY
+    // E depois do preço, se tiver numero de 3 digitos, é outro item.
+    
+    // Estratégia mais robusta: Procurar pela QUANTIDADE seguida de PREÇO.
+    // Ex: "4 69,60"
+    // Vamos varrer a linha procurando esse padrão.
+    
+    const regexQtdPreco = /(\d{1,2})\s+[\d.,]{3,}/g;
+    let match;
+    
+    while ((match = regexQtdPreco.exec(l)) !== null) {
+      // Achamos uma quantidade e preço!
+      let qtd = parseInt(match[1]); // O grupo 1 é a quantidade
+      
+      // Agora precisamos saber O NOME do sanduíche que veio antes dessa quantidade.
+      // Pegamos o texto do inicio da linha (ou do ultimo match) até aqui.
+      let indexFimNome = match.index;
+      let trechoAnterior = l.substring(0, indexFimNome);
+      
+      // Pega as ultimas palavras desse trecho (provavelmente o nome)
+      // Limpa preços anteriores se houver
+      
+      // Analisa o FATOR desse item encontrado
+      let fator = 0;
+      if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM') || trechoAnterior.includes('ROYS FDS') || trechoAnterior.includes('PRA VALER') || trechoAnterior.includes('FRESH')) fator = 0.5;
+      else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM') || trechoAnterior.includes('DOUBLE') || trechoAnterior.includes('CRISPY') || trechoAnterior.includes('CREAM') || trechoAnterior.includes('ROYS FRANGO') || trechoAnterior.includes('PICANHA')) fator = 1.0;
+      else if (trechoAnterior.includes('BIG KING') || trechoAnterior.includes('MEGA') || trechoAnterior.includes('TRIO')) fator = 2.0;
 
-    // Filtro: A linha parece ser um produto?
-    // Deve ter ROYS, COMBO, SMASH, KING ou estar numa categoria válida
-    if (fatorItem > 0 && (l.includes('ROYS') || l.includes('COMBO') || l.includes('SMASH') || l.includes('KING') || l.includes('FRESH') || fatorCategoriaAtual > 0)) {
-      
-      // 3. Buscar Quantidade
-      let qtd = 0;
-      
-      // A) Tenta achar números na MESMA LINHA
-      // Regex ignora o código inicial (ex: "158 ...") se houver texto depois
-      // Procura números < 60 que não sejam o começo da linha (a menos que seja linha curta)
-      
-      const nums = l.match(/\d+/g);
-      if (nums) {
-         for (let nStr of nums) {
-             let n = parseInt(nStr);
-             // Regra: > 0 e < 60. E não pode ser o código do produto (geralmente > 100)
-             if (n > 0 && n < 60) {
-                 // Se o numero está no inicio da linha e é > 50, é código.
-                 // Se for pequeno (ex: 4), é quantidade.
-                 qtd = n;
+      // Filtro de segurança: Precisa ter nome de produto válido
+      if (fator > 0 && (trechoAnterior.includes('ROYS') || trechoAnterior.includes('COMBO') || trechoAnterior.includes('SMASH') || trechoAnterior.includes('KING') || trechoAnterior.includes('TRIO') || trechoAnterior.includes('FRESH'))) {
+         
+         // Verifica se não é "Taxa de entrega" (as vezes tem qtd 5 e preço)
+         if (!trechoAnterior.includes('TAXA') && !trechoAnterior.includes('ENTREGA')) {
+             if (qtd > 0 && qtd < 60) {
+                total += qtd * fator;
+                log += `Item: [${trechoAnterior.slice(-20).trim()}] Q:${qtd} F:${fator}\n`;
              }
          }
       }
-
-      // B) ESTRATÉGIA OLHAR DE LINCE (Next Line)
-      // Se não achou quantidade na linha, e a próxima linha é SÓ um número, pega ele!
-      if (qtd === 0 && i + 1 < linhas.length) {
-          let prox = linhas[i+1].trim();
-          // Verifica se a próxima linha é um número isolado ou "Numero + 0,00"
-          if (/^(\d+)(\s+[\d,.]+)?$/.test(prox)) {
-             let nProx = parseInt(prox.match(/\d+/)[0]);
-             if (nProx > 0 && nProx < 60) {
-                 qtd = nProx;
-                 // log += ` [Qtd na prox linha: ${qtd}]`;
-             }
-          }
-      }
-
-      // 4. Somar
-      if (qtd > 0) {
-          let sub = qtd * fatorItem;
-          total += sub;
-          log += `${l.substring(0, 15)}... (Q:${qtd} x F:${fatorItem}) = ${sub}\n`;
-      }
+      
+      // Corta a string para procurar o próximo item na mesma linha (coluna da direita)
+      l = l.substring(indexFimNome + match[0].length);
+      regexQtdPreco.lastIndex = 0; // Reinicia regex para a nova string cortada
     }
   }
   return { total: total, log: log };
