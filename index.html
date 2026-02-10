@@ -98,7 +98,7 @@
 
     <div class="card">
       <h2>3. Leitura do Sistema</h2>
-      <p style="font-size:13px; color:#718096; margin-bottom:15px;">Dica: Use PDF para melhor precisão.</p>
+      <p style="font-size:13px; color:#718096; margin-bottom:15px;">Dica: Prefira usar o PDF.</p>
       <input type="file" id="camera-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)">
       <button class="btn btn-camera" onclick="document.getElementById('camera-input').click()">📁 Abrir PDF ou 📸 Foto</button>
 
@@ -110,8 +110,8 @@
           <input type="number" id="inp-sistema" style="font-size:24px; color:var(--red); font-weight:700;" placeholder="0">
         </div>
         <div style="margin-top:10px">
-          <label style="font-size:11px;color:#999">Clique para ver o que o robô leu:</label>
-          <textarea id="ocr-debug" style="width:100%; height:60px; font-size:10px; border:1px solid #eee; color:#777;" readonly onclick="this.style.height='200px'"></textarea>
+          <label style="font-size:11px;color:#999">Resumo da leitura:</label>
+          <textarea id="ocr-debug" style="width:100%; height:60px; font-size:10px; border:1px solid #eee; color:#777;" readonly></textarea>
         </div>
       </div>
     </div>
@@ -161,8 +161,10 @@ async function processarArquivo(inp) {
   document.getElementById('ocr-result').classList.add('hidden');
   try {
     let txt = inp.files[0].type=='application/pdf' ? await lerPDF(inp.files[0]) : await lerImagem(inp.files[0]);
-    document.getElementById('ocr-debug').value = txt; 
-    document.getElementById('inp-sistema').value = analisarTextoV5(txt);
+    document.getElementById('ocr-debug').value = "Processando texto..."; 
+    const resultado = analisarTextoV6(txt);
+    document.getElementById('inp-sistema').value = resultado.total;
+    document.getElementById('ocr-debug').value = resultado.log; 
     document.getElementById('ocr-result').classList.remove('hidden');
   } catch(e){ console.log(e); alert('Erro ao ler. Digite o total manualmente.'); }
   finally { document.getElementById('ocr-loading').style.display='none'; }
@@ -184,56 +186,83 @@ async function lerImagem(f) {
   await w.terminate(); return text;
 }
 
-// --- CÉREBRO V5.0 (LEITOR UNIVERSAL) ---
-function analisarTextoV5(texto) {
+// --- CÉREBRO V6.0 (COM MEMÓRIA DE CATEGORIA) ---
+function analisarTextoV6(texto) {
   const linhas = texto.toUpperCase().split('\n');
   let total = 0;
+  let log = "";
   
-  for (let linha of linhas) {
-    let l = linha.trim();
-    if (l.length < 5) continue; // Pula linhas muito curtas
+  // Estado: Categoria atual (para quando o nome do item for cortado)
+  // 0 = indefinido, 0.5 = Smart, 1.0 = Super/Normal
+  let fatorCategoriaAtual = 0; 
 
-    // 1. Identifica se é sanduíche
-    let fator = 0;
-    if (l.includes('SMART') || l.includes('15CM') || l.includes('ROYS FDS') || l.includes('PRA VALER') || l.includes('FRESH')) fator = 0.5;
-    else if (l.includes('SUPER') || l.includes('30CM') || l.includes('DOUBLE') || l.includes('CRISPY') || l.includes('CREAM') || l.includes('ROYS FRANGO')) fator = 1.0;
-    else if (l.includes('BIG KING') || l.includes('MEGA') || l.includes('TRIO')) fator = 2.0;
+  for (let i = 0; i < linhas.length; i++) {
+    let l = linhas[i].trim();
+    if (l.length < 3) continue;
 
-    // Precisa ter palavras chave de produto
-    if (fator > 0 && (l.includes('ROYS') || l.includes('COMBO') || l.includes('SMASH') || l.includes('KING') || l.includes('TRIO') || l.includes('FRESH'))) {
+    // 1. Detectar Cabeçalhos de Categoria (Atualiza a memória)
+    if (l.includes('SANDUICHE SMART') || l.includes('COMBOS SMART') || l.includes('COMBOS NOVOS SMART')) fatorCategoriaAtual = 0.5;
+    else if (l.includes('SANDUICHE SUPER') || l.includes('COMBOS NOVOS SUPER')) fatorCategoriaAtual = 1.0;
+    else if (l.includes('OFERTAS ROYS')) fatorCategoriaAtual = 1.0; // Padrão ofertas
+
+    // 2. Tentar identificar fator do ITEM específico
+    let fatorItem = 0;
+    
+    // Regras de nome explícito
+    if (l.includes('SMART') || l.includes('15CM') || l.includes('SMAR ') || l.endsWith(' SM') || l.endsWith(' S')) fatorItem = 0.5;
+    else if (l.includes('SUPER') || l.includes('30CM') || l.includes('DOUBLE') || l.includes('CRISPY') || l.includes('CREAM') || l.includes('ROYS FRANGO') || l.includes('PICANHA')) fatorItem = 1.0;
+    else if (l.includes('BIG KING') || l.includes('MEGA') || l.includes('TRIO')) fatorItem = 2.0;
+    
+    // Se não achou no nome, usa o da categoria memorizada
+    if (fatorItem === 0) fatorItem = fatorCategoriaAtual;
+
+    // Filtro: A linha parece ser um produto?
+    // Deve ter ROYS, COMBO, SMASH, KING ou estar numa categoria válida
+    if (fatorItem > 0 && (l.includes('ROYS') || l.includes('COMBO') || l.includes('SMASH') || l.includes('KING') || l.includes('FRESH') || fatorCategoriaAtual > 0)) {
       
-      // 2. Extrai TODOS os números da linha
-      // Regex pega números inteiros isolados
-      const numeros = l.match(/\b\d+\b/g);
+      // 3. Buscar Quantidade
+      let qtd = 0;
       
-      if (numeros) {
-        let qtdEncontrada = 0;
-        
-        // Vamos testar cada número encontrado na linha
-        for (let numStr of numeros) {
-          let n = parseInt(numStr);
-          
-          // Filtra: Quantidade deve ser > 0 e < 60
-          // Se for código de produto (ex: 158, 305, 362), geralmente é > 100
-          if (n > 0 && n < 60) {
-            qtdEncontrada = n;
-            // Se achou um número válido, verifica se não é o código no início da linha
-            // Ex: "4 ROYS..." (4 é qtd) vs "158 ROYS..." (158 é código)
-            if (l.startsWith(numStr)) {
-               // Se está no começo, só aceitamos se for pequeno (tipo até 10)
-               // Se for 158, ignora. Se for 4, aceita.
-            }
+      // A) Tenta achar números na MESMA LINHA
+      // Regex ignora o código inicial (ex: "158 ...") se houver texto depois
+      // Procura números < 60 que não sejam o começo da linha (a menos que seja linha curta)
+      
+      const nums = l.match(/\d+/g);
+      if (nums) {
+         for (let nStr of nums) {
+             let n = parseInt(nStr);
+             // Regra: > 0 e < 60. E não pode ser o código do produto (geralmente > 100)
+             if (n > 0 && n < 60) {
+                 // Se o numero está no inicio da linha e é > 50, é código.
+                 // Se for pequeno (ex: 4), é quantidade.
+                 qtd = n;
+             }
+         }
+      }
+
+      // B) ESTRATÉGIA OLHAR DE LINCE (Next Line)
+      // Se não achou quantidade na linha, e a próxima linha é SÓ um número, pega ele!
+      if (qtd === 0 && i + 1 < linhas.length) {
+          let prox = linhas[i+1].trim();
+          // Verifica se a próxima linha é um número isolado ou "Numero + 0,00"
+          if (/^(\d+)(\s+[\d,.]+)?$/.test(prox)) {
+             let nProx = parseInt(prox.match(/\d+/)[0]);
+             if (nProx > 0 && nProx < 60) {
+                 qtd = nProx;
+                 // log += ` [Qtd na prox linha: ${qtd}]`;
+             }
           }
-        }
-        
-        // Se achou alguma quantidade válida nessa linha, soma
-        if (qtdEncontrada > 0) {
-          total += qtdEncontrada * fator;
-        }
+      }
+
+      // 4. Somar
+      if (qtd > 0) {
+          let sub = qtd * fatorItem;
+          total += sub;
+          log += `${l.substring(0, 15)}... (Q:${qtd} x F:${fatorItem}) = ${sub}\n`;
       }
     }
   }
-  return total;
+  return { total: total, log: log };
 }
 
 function calcular() {
