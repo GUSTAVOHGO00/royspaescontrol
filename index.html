@@ -76,6 +76,7 @@
 <div id="screen-list">
   <div class="header">
     <div class="logo-area">
+      <img src="logo.png" class="logo-img" alt="Logo" onerror="this.style.display='none'">
       <div class="app-title"><h1>Roy's</h1><p>Controle de Fechamento</p></div>
     </div>
   </div>
@@ -111,15 +112,10 @@
 
     <div class="card">
       <h2>3. Leitura do Sistema</h2>
-      <p style="font-size:13px; color:#718096; margin-bottom:15px;">Selecione o <b>PDF</b> ou tire <b>FOTO</b> do cupom.</p>
+      <p style="font-size:13px; color:#718096; margin-bottom:15px;">Selecione o <b>PDF</b> ou tire foto.</p>
       <input type="file" id="file-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)">
       <button class="btn btn-camera" onclick="document.getElementById('file-input').click()">📁 Abrir PDF ou 📸 Foto</button>
-      
-      <div id="ocr-loading" class="loading hidden">
-        <div class="spinner"></div>
-        <span id="ocr-status-text">Processando imagem...</span>
-      </div>
-      
+      <div id="ocr-loading" class="loading hidden"><div class="spinner"></div><span>Analisando arquivo...</span></div>
       <div id="ocr-result" class="hidden">
         <div class="form-group" style="margin-top:10px">
           <label>Total Sistema (Pães 30cm)</label>
@@ -129,11 +125,10 @@
             <div style="font-size:12px; color:var(--blue); cursor:pointer; font-weight:bold" onclick="document.getElementById('lista-itens-ocr').classList.toggle('hidden')">Ver itens detectados ▼</div>
             <div id="lista-itens-ocr" class="hidden" style="max-height:150px; overflow-y:auto; background:#f9f9f9; padding:5px; border:1px solid #eee; font-size:11px;"></div>
         </div>
+        <textarea id="ocr-log" style="display:none"></textarea>
       </div>
     </div>
-
     <button class="btn btn-primary" onclick="calcular()">CALCULAR RESULTADO</button>
-
     <div id="result-area" class="hidden">
       <div id="traffic-light" class="result-box">
         <div style="font-size:48px; margin-bottom:10px" id="res-icon">✅</div>
@@ -165,21 +160,12 @@
 
 <script>
 const CATEGORIAS = [
-  {id:'abertura', label:'A) Abertura'}, 
-  {id:'assados', label:'B) Assados/Produzidos'},
-  {id:'desperdicio', label:'C) Desperdícios'}, 
-  {id:'cortesia', label:'D) Cortesias'}, 
-  {id:'sobra', label:'E) Sobra Final'}
+  {id:'abertura', label:'A) Abertura'}, {id:'assados', label:'B) Assados/Produzidos'},
+  {id:'desperdicio', label:'C) Desperdícios'}, {id:'cortesia', label:'D) Cortesias'}, {id:'sobra', label:'E) Sobra Final'}
 ];
-
 let dadosManual = {}, itensSistemaDetectados = [], fechamentoAtual = null;
 
-window.onload = () => { 
-    gerarInputsManual(); 
-    carregarHistorico();
-    document.getElementById('inp-data').valueAsDate = new Date(); 
-}
-
+window.onload = () => { gerarInputsManual(); carregarHistorico(); document.getElementById('inp-data').valueAsDate = new Date(); }
 function navTo(id) {
   document.querySelectorAll('body > div').forEach(d => d.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
@@ -194,7 +180,6 @@ function gerarInputsManual() {
     c.innerHTML+=`<div class="bread-row"><div class="bread-row-head"><span>${cat.label}</span><span class="bread-equiv" id="equiv-${cat.id}">0 eq.</span></div><div class="bread-cols"><div class="bread-col"><span>30 CM</span><input type="number" placeholder="0" oninput="updManual('${cat.id}','q30',this.value)"></div><div class="bread-col"><span>15 CM</span><input type="number" placeholder="0" oninput="updManual('${cat.id}','q15',this.value)"></div></div></div>`;
   });
 }
-
 function updManual(id,t,v) {
   dadosManual[id][t]=parseInt(v)||0;
   document.getElementById(`equiv-${id}`).innerText = (dadosManual[id].q30 + dadosManual[id].q15*0.5) + " eq.";
@@ -202,42 +187,22 @@ function updManual(id,t,v) {
   document.getElementById('manual-total').innerText = calc('abertura')+calc('assados')-calc('desperdicio')-calc('cortesia')-calc('sobra');
 }
 
-// --- LÓGICA DE LEITURA (PDF E FOTO) ATUALIZADA ---
-
+// --- LEITOR V12 (COM BLACKLIST) ---
 async function processarArquivo(inp) {
   if(!inp.files[0]) return;
   document.getElementById('ocr-loading').classList.remove('hidden');
   document.getElementById('ocr-result').classList.add('hidden');
-  document.getElementById('ocr-status-text').innerText = "Analisando arquivo...";
-
   try {
-    let txt = "";
-    if(inp.files[0].type === 'application/pdf') {
-        txt = await lerPDF(inp.files[0]);
-    } else {
-        // Se for imagem, usa a nova lógica com pré-processamento
-        document.getElementById('ocr-status-text').innerText = "Melhorando imagem...";
-        txt = await lerImagem(inp.files[0]);
-    }
-    
-    document.getElementById('ocr-status-text').innerText = "Calculando itens...";
+    let txt = inp.files[0].type=='application/pdf' ? await lerPDF(inp.files[0]) : await lerImagem(inp.files[0]);
     const res = analisarTextoV12(txt);
-    
     document.getElementById('inp-sistema').value = res.total;
     itensSistemaDetectados = res.itens;
     document.getElementById('lista-itens-ocr').innerHTML = res.itens.map(i => `<div style="border-bottom:1px solid #ddd;padding:2px"><b>${i.qtd}</b> x ${i.nome} <span style="float:right;color:#777">(${i.fator})</span></div>`).join('');
     document.getElementById('ocr-result').classList.remove('hidden');
-
-  } catch(e){ 
-      console.log(e); 
-      alert('Não foi possível ler o arquivo automaticamente. Por favor, digite o valor manual.'); 
-  } finally { 
-      document.getElementById('ocr-loading').classList.add('hidden');
-      inp.value = ''; // Reseta input para permitir selecionar o mesmo arquivo se errar
-  }
+  } catch(e){ console.log(e); alert('Erro ao ler. Digite manual.'); }
+  finally { document.getElementById('ocr-loading').classList.add('hidden'); }
 }
 
-// Função para ler PDF (Mantida igual)
 async function lerPDF(f) {
   const pdf = await pdfjsLib.getDocument(await f.arrayBuffer()).promise;
   let fullText = "";
@@ -248,99 +213,31 @@ async function lerPDF(f) {
     const items = content.items.filter(it => it.str.trim().length > 0);
     for (const item of items) {
         const y = item.transform[5];
-        if (lastY !== -1 && Math.abs(y - lastY) > 5) pageText += "\n";
-        else if (lastY !== -1) pageText += " ";
+        if (lastY !== -1 && Math.abs(y - lastY) > 5) pageText += "\n"; else if (lastY !== -1) pageText += " ";
         pageText += item.str; lastY = y;
     }
     fullText += pageText + "\n";
   }
   return fullText;
 }
-
-// --- NOVA FUNÇÃO DE LEITURA DE IMAGEM ---
 async function lerImagem(f) {
-  // 1. Pré-processa a imagem (limpa fundo cinza, aumenta contraste)
-  const imgProcessada = await preprocessarImagem(f);
-  
-  // 2. Cria o worker do Tesseract
-  const worker = await Tesseract.createWorker('por');
-  
-  // 3. Configura parâmetros críticos para cupons
-  await worker.setParameters({
-    tessedit_pageseg_mode: '6', // Assume um bloco único de texto (evita quebrar colunas)
-  });
-
-  document.getElementById('ocr-status-text').innerText = "Lendo texto...";
-  const { data: { text } } = await worker.recognize(imgProcessada);
-  
-  await worker.terminate(); 
-  return text;
-}
-
-// Função auxiliar: Transforma imagem em P&B e remove sombras
-function preprocessarImagem(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Redimensionar se for muito grande para não travar o celular
-        const MAX_SIZE = 2000;
-        let width = img.width;
-        let height = img.height;
-        
-        if (width > MAX_SIZE || height > MAX_SIZE) {
-            const ratio = Math.min(MAX_SIZE / width, MAX_SIZE / height);
-            width *= ratio;
-            height *= ratio;
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Manipulação de pixels (Threshold / Limiarização)
-        const imageData = ctx.getImageData(0, 0, width, height);
-        const data = imageData.data;
-        
-        for (let i = 0; i < data.length; i += 4) {
-          // Calcula média de brilho (escala de cinza)
-          const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-          
-          // Se for claro (> 130), vira BRANCO (255). Se for escuro, vira PRETO (0).
-          // Isso remove o fundo cinza do papel térmico e deixa a letra preta forte.
-          const color = avg > 130 ? 255 : 0; 
-          
-          data[i] = color;     // R
-          data[i + 1] = color; // G
-          data[i + 2] = color; // B
-        }
-        
-        ctx.putImageData(imageData, 0, 0);
-        resolve(canvas.toDataURL('image/jpeg'));
-      };
-      img.onerror = reject;
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
+  const w = await Tesseract.createWorker('por');
+  const {data:{text}} = await w.recognize(f);
+  await w.terminate(); return text;
 }
 
 function analisarTextoV12(texto) {
   const linhas = texto.toUpperCase().split('\n');
-  let total = 0, itens = [], categoriaAtual = "";
-  
+  let total = 0, itens = [], categoriaAtual = ""; 
+
   for (let linha of linhas) {
     let l = linha.trim();
     if (l.length < 3) continue;
 
-    // BLACKLIST
+    // 1. BLACKLIST (Exclui Batatas, Saladas, Fresh Fit, etc)
     if (l.includes('BATATA') || l.includes('FRESH FIT') || l.includes('SALADA') || l.includes('BEBIDA') || l.includes('AGUA') || l.includes('SUCO') || l.includes('REFRI') || l.includes('MOUSSE') || l.includes('ADICIONAL') || l.includes('EMBALAGEM') || l.includes('CHIPS')) continue;
 
-    // Identificação de Categoria
+    // 2. Contexto de Categoria
     if (l.includes('SANDUICHE SMART') || l.includes('COMBOS SMART')) categoriaAtual = "SMART";
     else if (l.includes('SANDUICHE SUPER') || l.includes('COMBOS NOVOS SUPER')) categoriaAtual = "SUPER";
     else if (l.includes('PROMOCOES')) categoriaAtual = "PROMOCOES";
@@ -359,15 +256,15 @@ function analisarTextoV12(texto) {
       
       let fator = 0;
       
-      // Lógica de Fatores
       if (categoriaAtual === "PROMOCOES") {
           if (trechoAnterior.includes('ROYS PRA VALER')) {
               if (trechoAnterior.includes('SEG')) fator = 0.5;
               else if (trechoAnterior.includes('TER') || trechoAnterior.includes('QUA') || trechoAnterior.includes('QUI') || trechoAnterior.includes('SEX')) fator = 1.0;
-              else fator = 0.5;
+              else fator = 0.5; 
           } 
           else if (trechoAnterior.includes('ROYS FDS')) fator = 1.0;
           else if (trechoAnterior.includes('ROYS KIDS')) fator = 0.5;
+          // Fallback para sanduíches normais dentro de promoções (erro comum de PDF)
           else if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM')) fator = 0.5;
           else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM')) fator = 1.0;
       } 
@@ -405,21 +302,9 @@ function calcular() {
   const card = document.getElementById('traffic-light');
   document.getElementById('result-area').classList.remove('hidden');
   
-  if(Math.abs(diff) == 0) { 
-      card.className='result-box status-verde'; 
-      document.getElementById('res-icon').innerText='✅'; 
-      document.getElementById('res-desc').innerText='Perfeito!';
-  } 
-  else if (Math.abs(diff) <= 0.5) { 
-      card.className='result-box status-amarelo'; 
-      document.getElementById('res-icon').innerText='⚠️'; 
-      document.getElementById('res-desc').innerText='Pequena diferença.';
-  } 
-  else { 
-      card.className='result-box status-vermelho'; 
-      document.getElementById('res-icon').innerText='🛑'; 
-      document.getElementById('res-desc').innerText='DIFERENÇA CRÍTICA!';
-  }
+  if(Math.abs(diff) == 0) { card.className='result-box status-verde'; document.getElementById('res-icon').innerText='✅'; document.getElementById('res-desc').innerText='Perfeito!'; } 
+  else if (Math.abs(diff) <= 0.5) { card.className='result-box status-amarelo'; document.getElementById('res-icon').innerText='⚠️'; document.getElementById('res-desc').innerText='Pequena diferença.'; } 
+  else { card.className='result-box status-vermelho'; document.getElementById('res-icon').innerText='🛑'; document.getElementById('res-desc').innerText='DIFERENÇA CRÍTICA!'; }
   document.getElementById('res-diff').innerText = (diff > 0 ? '+' : '') + diff;
   document.getElementById('result-area').scrollIntoView({behavior:'smooth'});
 }
@@ -428,7 +313,7 @@ function salvar() {
   const diff = document.getElementById('res-diff').innerText;
   const just = document.getElementById('inp-just').value;
   if (diff != '0' && diff != '+0' && !just) return alert('Justificativa obrigatória!');
-  
+
   const registro = {
       id: Date.now(),
       data: document.getElementById('inp-data').value.split('-').reverse().join('/'),
@@ -467,8 +352,7 @@ function abrirDetalhe(id) {
 function exportarPDF() {
     if(!fechamentoAtual) return;
     const { jsPDF } = window.jspdf; const doc = new jsPDF();
-    doc.setFillColor(227,6,19);
-    doc.rect(0,0,210,20,'F'); doc.setTextColor(255,255,255); doc.setFontSize(16); doc.text("Relatório Roy's",10,13);
+    doc.setFillColor(227,6,19); doc.rect(0,0,210,20,'F'); doc.setTextColor(255,255,255); doc.setFontSize(16); doc.text("Relatório Roy's",10,13);
     doc.setTextColor(0,0,0); doc.setFontSize(12); doc.text(`Data: ${fechamentoAtual.data} | Unidade: ${fechamentoAtual.unidade}`,10,30);
     doc.text(`Manual: ${fechamentoAtual.manual} | Sistema: ${fechamentoAtual.sistema} | Diff: ${fechamentoAtual.diff}`,10,40);
     if(fechamentoAtual.itens && fechamentoAtual.itens.length > 0) {
