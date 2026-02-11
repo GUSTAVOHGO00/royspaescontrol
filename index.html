@@ -69,8 +69,6 @@
   @keyframes spin { 100% { transform: rotate(360deg); } }
   .item-row { display: flex; justify-content: space-between; border-bottom: 1px solid #EEE; padding: 8px 0; font-size: 13px; }
   .item-name { font-weight: 600; flex: 1; }
-  
-  .preview-img { max-width: 100%; border-radius: 8px; margin: 10px 0; border: 2px solid #E2E8F0; }
 </style>
 </head>
 <body>
@@ -117,7 +115,6 @@
       <p style="font-size:13px; color:#718096; margin-bottom:15px;">Selecione o <b>PDF</b> ou tire foto.</p>
       <input type="file" id="file-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)">
       <button class="btn btn-camera" onclick="document.getElementById('file-input').click()">📁 Abrir PDF ou 📸 Foto</button>
-      <div id="image-preview" class="hidden"></div>
       <div id="ocr-loading" class="loading hidden"><div class="spinner"></div><span>Analisando arquivo...</span></div>
       <div id="ocr-result" class="hidden">
         <div class="form-group" style="margin-top:10px">
@@ -131,232 +128,124 @@
         <textarea id="ocr-log" style="display:none"></textarea>
       </div>
     </div>
-
-    <div class="card hidden" id="result-area">
-      <h2>4. Resultado</h2>
+    <button class="btn btn-primary" onclick="calcular()">CALCULAR RESULTADO</button>
+    <div id="result-area" class="hidden">
       <div id="traffic-light" class="result-box">
-        <div id="res-icon" style="font-size:50px">⚪</div>
-        <div id="res-desc" style="font-size:18px; font-weight:700; margin:10px 0">Aguardando...</div>
-        <div style="font-size:36px; font-weight:700">Diff: <span id="res-diff">0</span></div>
+        <div style="font-size:48px; margin-bottom:10px" id="res-icon">✅</div>
+        <div style="font-size:36px; font-weight:800" id="res-diff">0</div>
+        <div style="font-size:16px; opacity:0.9" id="res-desc">Sem diferença</div>
       </div>
-      <div class="form-group" style="margin-top:15px">
-        <label>Justificativa (obrigatória se diferença)</label>
-        <textarea id="inp-just" rows="3" placeholder="Explique a diferença..."></textarea>
+      <div class="card" style="margin-top:20px">
+        <label>Justificativa (Obrigatória se houver erro)</label>
+        <input type="text" id="inp-just" placeholder="Explique o motivo...">
       </div>
-      <button class="btn btn-primary" onclick="salvar()">💾 Salvar Fechamento</button>
+      <button class="btn btn-secondary" onclick="salvar()">💾 SALVAR NO HISTÓRICO</button>
     </div>
-
-    <button class="btn btn-primary" onclick="calcular()">📊 Calcular</button>
-    <button class="btn btn-secondary" onclick="resetarForm()">🔄 Nova Análise</button>
+    <div style="height:60px"></div>
   </div>
 </div>
 
 <div id="screen-detail" class="hidden">
-  <div class="header">
-    <button class="btn-icon" onclick="navTo('screen-list')">←</button>
-    <div class="app-title"><h1>Detalhes</h1></div>
-    <div style="width:20px"></div>
-  </div>
-  <div class="container" id="detail-content"></div>
-  <div class="container"><button class="btn btn-primary" onclick="exportarPDF()">📄 Exportar PDF</button></div>
+    <div class="header">
+        <button class="btn-icon" onclick="navTo('screen-list')">←</button>
+        <div class="app-title"><h1>Detalhes</h1></div>
+        <div style="width:20px"></div>
+    </div>
+    <div class="container">
+        <div id="detail-content"></div>
+        <button class="btn btn-primary" onclick="exportarPDF()">📄 EXPORTAR PDF</button>
+        <div style="height:20px"></div>
+    </div>
 </div>
 
-<canvas id="canvas-temp" style="display:none"></canvas>
-
 <script>
-let itensSistemaDetectados = [];
-let fechamentoAtual = null;
-
-const paes = [
-  {nome:'Pão Francês',eq:0.15},{nome:'Pão Português',eq:0.15},{nome:'Pão de Forma',eq:0.10},
-  {nome:'Pão Doce',eq:0.15},{nome:'Croissant',eq:0.20},{nome:'Outros',eq:0.20}
+const CATEGORIAS = [
+  {id:'abertura', label:'A) Abertura'}, {id:'assados', label:'B) Assados/Produzidos'},
+  {id:'desperdicio', label:'C) Desperdícios'}, {id:'cortesia', label:'D) Cortesias'}, {id:'sobra', label:'E) Sobra Final'}
 ];
+let dadosManual = {}, itensSistemaDetectados = [], fechamentoAtual = null;
 
-function navTo(screen) {
-  document.querySelectorAll('[id^=screen-]').forEach(s => s.classList.add('hidden'));
-  document.getElementById(screen).classList.remove('hidden');
-  if(screen === 'screen-list') carregarHistorico();
-  if(screen === 'screen-new') { gerarInputsManual(); document.getElementById('inp-data').value = new Date().toISOString().split('T')[0]; }
+window.onload = () => { gerarInputsManual(); carregarHistorico(); document.getElementById('inp-data').valueAsDate = new Date(); }
+function navTo(id) {
+  document.querySelectorAll('body > div').forEach(d => d.classList.add('hidden'));
+  document.getElementById(id).classList.remove('hidden');
+  if(id=='screen-new') resetarForm();
+  if(id=='screen-list') carregarHistorico();
 }
 
 function gerarInputsManual() {
-  const div = document.getElementById('manual-inputs');
-  div.innerHTML = '';
-  paes.forEach(p => {
-    div.innerHTML += `<div class="bread-row"><div class="bread-row-head"><span>${p.nome}</span><span class="bread-equiv">x${p.eq}</span></div><div class="bread-cols"><div class="bread-col"><span>INÍCIO</span><input type="number" id="inicio-${p.nome}" value="0" oninput="calcularManual()"></div><div class="bread-col"><span>FIM</span><input type="number" id="fim-${p.nome}" value="0" oninput="calcularManual()"></div></div></div>`;
+  const c = document.getElementById('manual-inputs'); c.innerHTML='';
+  CATEGORIAS.forEach(cat => {
+    dadosManual[cat.id]={q30:0,q15:0};
+    c.innerHTML+=`<div class="bread-row"><div class="bread-row-head"><span>${cat.label}</span><span class="bread-equiv" id="equiv-${cat.id}">0 eq.</span></div><div class="bread-cols"><div class="bread-col"><span>30 CM</span><input type="number" placeholder="0" oninput="updManual('${cat.id}','q30',this.value)"></div><div class="bread-col"><span>15 CM</span><input type="number" placeholder="0" oninput="updManual('${cat.id}','q15',this.value)"></div></div></div>`;
   });
 }
-
-function calcularManual() {
-  let total = 0;
-  paes.forEach(p => {
-    const i = parseFloat(document.getElementById(`inicio-${p.nome}`).value)||0;
-    const f = parseFloat(document.getElementById(`fim-${p.nome}`).value)||0;
-    total += (i-f)*p.eq;
-  });
-  document.getElementById('manual-total').innerText = total.toFixed(2);
+function updManual(id,t,v) {
+  dadosManual[id][t]=parseInt(v)||0;
+  document.getElementById(`equiv-${id}`).innerText = (dadosManual[id].q30 + dadosManual[id].q15*0.5) + " eq.";
+  const calc=(i)=>dadosManual[i].q30+dadosManual[i].q15*0.5;
+  document.getElementById('manual-total').innerText = calc('abertura')+calc('assados')-calc('desperdicio')-calc('cortesia')-calc('sobra');
 }
 
-// MELHORIAS NO PROCESSAMENTO DE IMAGENS
-async function processarArquivo(input) {
-  const file = input.files[0];
-  if (!file) return;
-
+// --- LEITOR V12 (COM BLACKLIST) ---
+async function processarArquivo(inp) {
+  if(!inp.files[0]) return;
   document.getElementById('ocr-loading').classList.remove('hidden');
   document.getElementById('ocr-result').classList.add('hidden');
-  document.getElementById('image-preview').classList.add('hidden');
-
   try {
-    if (file.type === 'application/pdf') {
-      await processarPDF(file);
-    } else {
-      await processarImagem(file);
-    }
-  } catch (error) {
-    console.error('Erro:', error);
-    alert('Erro ao processar arquivo. Tente novamente.');
-    document.getElementById('ocr-loading').classList.add('hidden');
-  }
+    let txt = inp.files[0].type=='application/pdf' ? await lerPDF(inp.files[0]) : await lerImagem(inp.files[0]);
+    const res = analisarTextoV12(txt);
+    document.getElementById('inp-sistema').value = res.total;
+    itensSistemaDetectados = res.itens;
+    document.getElementById('lista-itens-ocr').innerHTML = res.itens.map(i => `<div style="border-bottom:1px solid #ddd;padding:2px"><b>${i.qtd}</b> x ${i.nome} <span style="float:right;color:#777">(${i.fator})</span></div>`).join('');
+    document.getElementById('ocr-result').classList.remove('hidden');
+  } catch(e){ console.log(e); alert('Erro ao ler. Digite manual.'); }
+  finally { document.getElementById('ocr-loading').classList.add('hidden'); }
 }
 
-async function processarImagem(file) {
-  // Mostrar preview da imagem
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const preview = document.getElementById('image-preview');
-    preview.innerHTML = `<img src="${e.target.result}" class="preview-img" alt="Preview">`;
-    preview.classList.remove('hidden');
-  };
-  reader.readAsDataURL(file);
-
-  // Pré-processar imagem para melhorar OCR
-  const processedImage = await preprocessImage(file);
-  
-  // Configurar Tesseract com parâmetros otimizados para fotos
-  const { data } = await Tesseract.recognize(
-    processedImage,
-    'por',
-    {
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          console.log(`OCR: ${Math.round(m.progress * 100)}%`);
-        }
-      },
-      tessedit_pageseg_mode: Tesseract.PSM.AUTO,
-      tessedit_char_whitelist: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz /-.,:%áéíóúâêôãõç',
-    }
-  );
-
-  processarTextoOCR(data.text);
-}
-
-async function preprocessImage(file) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      img.onload = () => {
-        const canvas = document.getElementById('canvas-temp');
-        const ctx = canvas.getContext('2d');
-        
-        // Redimensionar para melhor performance e qualidade
-        const maxWidth = 2000;
-        const scale = Math.min(1, maxWidth / img.width);
-        canvas.width = img.width * scale;
-        canvas.height = img.height * scale;
-        
-        // Desenhar imagem redimensionada
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        
-        // Aplicar melhorias de contraste e brilho
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-        
-        // Aumentar contraste
-        const contrast = 40;
-        const factor = (259 * (contrast + 255)) / (255 * (259 - contrast));
-        
-        for (let i = 0; i < data.length; i += 4) {
-          data[i] = factor * (data[i] - 128) + 128;     // R
-          data[i + 1] = factor * (data[i + 1] - 128) + 128; // G
-          data[i + 2] = factor * (data[i + 2] - 128) + 128; // B
-        }
-        
-        ctx.putImageData(imageData, 0, 0);
-        
-        // Converter para blob
-        canvas.toBlob((blob) => {
-          resolve(blob);
-        }, 'image/jpeg', 0.95);
-      };
-      img.src = e.target.result;
-    };
-    
-    reader.readAsDataURL(file);
-  });
-}
-
-async function processarPDF(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-  let textoCompleto = '';
-
-  for (let i = 1; i <= pdf.numPages; i++) {
+async function lerPDF(f) {
+  const pdf = await pdfjsLib.getDocument(await f.arrayBuffer()).promise;
+  let fullText = "";
+  for(let i=1; i<=pdf.numPages; i++) {
     const page = await pdf.getPage(i);
-    const textContent = await page.getTextContent();
-    textContent.items.forEach(item => {
-      textoCompleto += item.str + ' ';
-    });
+    const content = await page.getTextContent();
+    let lastY = -1; let pageText = "";
+    const items = content.items.filter(it => it.str.trim().length > 0);
+    for (const item of items) {
+        const y = item.transform[5];
+        if (lastY !== -1 && Math.abs(y - lastY) > 5) pageText += "\n"; else if (lastY !== -1) pageText += " ";
+        pageText += item.str; lastY = y;
+    }
+    fullText += pageText + "\n";
   }
-
-  processarTextoOCR(textoCompleto);
+  return fullText;
+}
+async function lerImagem(f) {
+  const w = await Tesseract.createWorker('por');
+  const {data:{text}} = await w.recognize(f);
+  await w.terminate(); return text;
 }
 
-function processarTextoOCR(texto) {
-  document.getElementById('ocr-log').value = texto;
-  
-  // Normalizar texto para melhorar detecção
-  texto = texto
-    .toUpperCase()
-    .replace(/[|]/g, 'I')
-    .replace(/[O0]/g, '0')
-    .replace(/\s+/g, ' ');
+function analisarTextoV12(texto) {
+  const linhas = texto.toUpperCase().split('\n');
+  let total = 0, itens = [], categoriaAtual = ""; 
 
-  const resultado = contarSanduiches(texto);
-  
-  document.getElementById('inp-sistema').value = resultado.total.toFixed(2);
-  
-  let listaHTML = '';
-  resultado.itens.forEach(item => {
-    listaHTML += `<div class="item-row"><span class="item-name">${item.nome}</span><span>${item.qtd} x ${item.fator} = ${(item.qtd * item.fator).toFixed(1)}</span></div>`;
-  });
-  document.getElementById('lista-itens-ocr').innerHTML = listaHTML;
-  
-  itensSistemaDetectados = resultado.itens;
-  document.getElementById('ocr-loading').classList.add('hidden');
-  document.getElementById('ocr-result').classList.remove('hidden');
-}
+  for (let linha of linhas) {
+    let l = linha.trim();
+    if (l.length < 3) continue;
 
-function contarSanduiches(texto) {
-  let total = 0;
-  let itens = [];
-  
-  const linhas = texto.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-  let categoriaAtual = "GERAL";
+    // 1. BLACKLIST (Exclui Batatas, Saladas, Fresh Fit, etc)
+    if (l.includes('BATATA') || l.includes('FRESH FIT') || l.includes('SALADA') || l.includes('BEBIDA') || l.includes('AGUA') || l.includes('SUCO') || l.includes('REFRI') || l.includes('MOUSSE') || l.includes('ADICIONAL') || l.includes('EMBALAGEM') || l.includes('CHIPS')) continue;
 
-  for (let l of linhas) {
-    // Detectar categorias (mesma lógica do PDF)
-    if (l.includes('SMART') && !l.match(/\d+\s+[\d.,]{3,}/)) categoriaAtual = "SMART";
-    else if (l.includes('SUPER') && !l.match(/\d+\s+[\d.,]{3,}/)) categoriaAtual = "SUPER";
-    else if (l.includes('PROMOCOES') || l.includes('PROMOÇÕES')) categoriaAtual = "PROMOCOES";
-    else if (l.includes('BEBIDA') || l.includes('ADICIONA') || l.includes('BATATA') || l.includes('TAXA')) categoriaAtual = "IGNORAR";
-    else if (l.includes('SALADA')) categoriaAtual = "IGNORAR";
-    else if (l.includes('COMBO')) categoriaAtual = "COMBOS";
+    // 2. Contexto de Categoria
+    if (l.includes('SANDUICHE SMART') || l.includes('COMBOS SMART')) categoriaAtual = "SMART";
+    else if (l.includes('SANDUICHE SUPER') || l.includes('COMBOS NOVOS SUPER')) categoriaAtual = "SUPER";
+    else if (l.includes('PROMOCOES')) categoriaAtual = "PROMOCOES";
+    else if (l.includes('OFERTAS ROYS')) categoriaAtual = "SUPER"; 
+    else if (l === 'ROYS PRA VALER' || l === 'FDS') categoriaAtual = "IGNORAR";
     
     if (categoriaAtual === "IGNORAR") continue;
 
-    // Buscar padrões de quantidade + preço
     const regexQtdPreco = /(\d{1,2})\s+[\d.,]{3,}/g;
     let match;
     
@@ -368,36 +257,33 @@ function contarSanduiches(texto) {
       let fator = 0;
       
       if (categoriaAtual === "PROMOCOES") {
-          if (trechoAnterior.includes('ROYS PRA VALER') || trechoAnterior.includes('PRA VALER')) {
+          if (trechoAnterior.includes('ROYS PRA VALER')) {
               if (trechoAnterior.includes('SEG')) fator = 0.5;
               else if (trechoAnterior.includes('TER') || trechoAnterior.includes('QUA') || trechoAnterior.includes('QUI') || trechoAnterior.includes('SEX')) fator = 1.0;
               else fator = 0.5; 
           } 
-          else if (trechoAnterior.includes('ROYS FDS') || trechoAnterior.includes('FDS')) fator = 1.0;
-          else if (trechoAnterior.includes('ROYS KIDS') || trechoAnterior.includes('KIDS')) fator = 0.5;
-          else if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM') || trechoAnterior.includes('15 CM')) fator = 0.5;
-          else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM') || trechoAnterior.includes('30 CM')) fator = 1.0;
+          else if (trechoAnterior.includes('ROYS FDS')) fator = 1.0;
+          else if (trechoAnterior.includes('ROYS KIDS')) fator = 0.5;
+          // Fallback para sanduíches normais dentro de promoções (erro comum de PDF)
+          else if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM')) fator = 0.5;
+          else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM')) fator = 1.0;
       } 
       else {
-          if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM') || trechoAnterior.includes('15 CM')) fator = 0.5;
-          else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM') || trechoAnterior.includes('30 CM') || trechoAnterior.includes('DOUBLE')) fator = 1.0;
-          else if (trechoAnterior.includes('BIG KING') || trechoAnterior.includes('MEGA') || trechoAnterior.includes('BIGKING')) fator = 2.0;
-          else if (trechoAnterior.includes('TRIO MIX') || trechoAnterior.includes('TRIOMIX')) fator = 1.5;
+          if (trechoAnterior.includes('SMART') || trechoAnterior.includes('15CM')) fator = 0.5;
+          else if (trechoAnterior.includes('SUPER') || trechoAnterior.includes('30CM') || trechoAnterior.includes('DOUBLE')) fator = 1.0;
+          else if (trechoAnterior.includes('BIG KING') || trechoAnterior.includes('MEGA')) fator = 2.0;
+          else if (trechoAnterior.includes('TRIO MIX')) fator = 1.5;
           
           if (fator === 0 && (categoriaAtual === "SMART" || categoriaAtual === "SUPER")) {
              fator = (categoriaAtual === "SMART") ? 0.5 : 1.0;
           }
       }
 
-      // Verificar se é um item válido
-      const palavrasChave = ['ROYS', 'COMBO', 'SMASH', 'KING', 'TRIO', 'FDS', 'DOUBLE', 'CRISPY', 'FRANGO', 'CARNE', 'PICANHA', 'ROSBIFE', 'CAMARAO', 'CHORIPAN'];
-      const temPalavraChave = palavrasChave.some(p => trechoAnterior.includes(p));
-
-      if (fator > 0 && temPalavraChave) {
-         if (!trechoAnterior.includes('TAXA') && !trechoAnterior.includes('ENTREGA') && !trechoAnterior.includes('DESCONTO')) {
+      if (fator > 0 && (trechoAnterior.includes('ROYS') || trechoAnterior.includes('COMBO') || trechoAnterior.includes('SMASH') || trechoAnterior.includes('KING') || trechoAnterior.includes('TRIO') || trechoAnterior.includes('FDS') || trechoAnterior.includes('DOUBLE'))) {
+         if (!trechoAnterior.includes('TAXA') && !trechoAnterior.includes('ENTREGA')) {
              if (qtd > 0 && qtd < 60) {
                 total += qtd * fator;
-                let nomeLimpo = trechoAnterior.replace(/\d+/g, '').replace('SUB-TOTAL','').replace('SUBTOTAL','').substring(0,30).trim();
+                let nomeLimpo = trechoAnterior.replace(/\d+/g, '').replace('SUB-TOTAL','').substring(0,25).trim();
                 itens.push({ nome: nomeLimpo, qtd: qtd, fator: fator });
              }
          }
@@ -419,7 +305,7 @@ function calcular() {
   if(Math.abs(diff) == 0) { card.className='result-box status-verde'; document.getElementById('res-icon').innerText='✅'; document.getElementById('res-desc').innerText='Perfeito!'; } 
   else if (Math.abs(diff) <= 0.5) { card.className='result-box status-amarelo'; document.getElementById('res-icon').innerText='⚠️'; document.getElementById('res-desc').innerText='Pequena diferença.'; } 
   else { card.className='result-box status-vermelho'; document.getElementById('res-icon').innerText='🛑'; document.getElementById('res-desc').innerText='DIFERENÇA CRÍTICA!'; }
-  document.getElementById('res-diff').innerText = (diff > 0 ? '+' : '') + diff.toFixed(2);
+  document.getElementById('res-diff').innerText = (diff > 0 ? '+' : '') + diff;
   document.getElementById('result-area').scrollIntoView({behavior:'smooth'});
 }
 
@@ -480,13 +366,9 @@ function resetarForm() {
     document.getElementById('lista-itens-ocr').innerHTML = '';
     document.getElementById('ocr-result').classList.add('hidden');
     document.getElementById('result-area').classList.add('hidden');
-    document.getElementById('image-preview').classList.add('hidden');
-    document.getElementById('file-input').value = '';
     gerarInputsManual();
 }
-
-// Inicializar ao carregar
-window.onload = () => navTo('screen-list');
 </script>
 </body>
 </html>
+
