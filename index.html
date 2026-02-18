@@ -81,6 +81,11 @@
   .loading{ text-align:center; padding:20px; }
   .spinner{ width:30px; height:30px; border:3px solid #E2E8F0; border-top:3px solid var(--blue); border-radius:50%; animation:spin 1s infinite linear; margin:0 auto 10px; }
   @keyframes spin{ 100%{ transform:rotate(360deg);} }
+
+  /* progresso OCR */
+  #ocr-progress-bar-wrap{ width:100%; background:#E2E8F0; border-radius:8px; height:8px; margin-top:8px; overflow:hidden; }
+  #ocr-progress-bar{ height:8px; background:var(--blue); border-radius:8px; width:0%; transition:width .2s; }
+  #ocr-status-text{ font-size:12px; color:#718096; margin-top:4px; }
 </style>
 </head>
 
@@ -130,7 +135,11 @@
       <input type="file" id="file-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)" />
       <button class="btn btn-camera" type="button" onclick="document.getElementById('file-input').click()">📁 Abrir PDF ou 📸 Foto</button>
 
-      <div id="ocr-loading" class="loading hidden"><div class="spinner"></div><span>Analisando arquivo...</span></div>
+      <div id="ocr-loading" class="loading hidden">
+        <div class="spinner"></div>
+        <span id="ocr-status-text">Analisando arquivo...</span>
+        <div id="ocr-progress-bar-wrap"><div id="ocr-progress-bar"></div></div>
+      </div>
 
       <div id="ocr-result" class="hidden">
         <div class="form-group" style="margin-top:10px">
@@ -298,12 +307,200 @@
     return fullText;
   }
 
-  async function lerImagem(f) {
-    const w = await Tesseract.createWorker("por");
-    const { data: { text } } = await w.recognize(f);
-    await w.terminate();
-    return text;
+  // ======================== lerImagem — VERSÃO ROBUSTA PARA CÂMERA ========================
+
+  // Atualiza a barra de progresso e mensagem de status
+  function setOcrStatus(msg, pct) {
+    const bar = document.getElementById("ocr-progress-bar");
+    const txt = document.getElementById("ocr-status-text");
+    if (bar) bar.style.width = (pct || 0) + "%";
+    if (txt) txt.innerText = msg;
   }
+
+  // ── Pré-processa o ImageBitmap e devolve um Blob PNG binarizado ──────────────
+  async function preprocessarImagem(imgBitmap, anguloGraus) {
+    // 1. Calcular dimensões após rotação
+    const rad   = (anguloGraus * Math.PI) / 180;
+    const cosA  = Math.abs(Math.cos(rad));
+    const sinA  = Math.abs(Math.sin(rad));
+    const origW = imgBitmap.width;
+    const origH = imgBitmap.height;
+
+    // largura alvo após rotação (mantemos o lado maior em ~2400px)
+    const ladoMaior = Math.max(origW, origH);
+    const escala    = Math.min(2400 / ladoMaior, 1.5); // nunca ampliar mais de 1.5×
+    const srcW = Math.round(origW * escala);
+    const srcH = Math.round(origH * escala);
+
+    // dimensões do canvas rotacionado
+    const W = Math.round(srcW * cosA + srcH * sinA);
+    const H = Math.round(srcW * sinA + srcH * cosA);
+
+    const canvas = document.createElement("canvas");
+    canvas.width  = W;
+    canvas.height = H;
+    const ctx = canvas.getContext("2d");
+
+    // fundo branco antes de rotacionar (evita bordas pretas)
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, W, H);
+
+    // 2. Rotacionar e desenhar
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.rotate(rad);
+    ctx.drawImage(imgBitmap, -srcW / 2, -srcH / 2, srcW, srcH);
+    ctx.restore();
+
+    // 3. Obter pixels
+    const imgData = ctx.getImageData(0, 0, W, H);
+    const d = imgData.data;
+
+    // 4. Escala de cinza (ITU-R BT.601)
+    const gray = new Uint8Array(W * H);
+    for (let i = 0; i < W * H; i++) {
+      gray[i] = Math.round(0.299 * d[i*4] + 0.587 * d[i*4+1] + 0.114 * d[i*4+2]);
+    }
+
+    // 5. Unsharp mask (realça bordas de letras)
+    const blurred = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        let sum = 0, cnt = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            const nx = x+dx, ny = y+dy;
+            if (nx>=0 && nx<W && ny>=0 && ny<H) { sum += gray[ny*W+nx]; cnt++; }
+          }
+        }
+        blurred[y*W+x] = Math.round(sum/cnt);
+      }
+    }
+    const sharp = new Uint8Array(W * H);
+    for (let i = 0; i < W*H; i++) {
+      sharp[i] = Math.min(255, Math.max(0, Math.round(gray[i] + 1.8*(gray[i]-blurred[i]))));
+    }
+
+    // 6. Binarização adaptativa (Sauvola-like) — robusta a iluminação irregular
+    const BLOCK = 60, DELTA = 8;
+    const integral = new Float64Array((W+1)*(H+1));
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        integral[(y+1)*(W+1)+(x+1)] =
+          sharp[y*W+x] +
+          integral[y*(W+1)+(x+1)] +
+          integral[(y+1)*(W+1)+x] -
+          integral[y*(W+1)+x];
+      }
+    }
+    const bin = new Uint8Array(W * H);
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const x1 = Math.max(0, x-BLOCK), y1 = Math.max(0, y-BLOCK);
+        const x2 = Math.min(W-1, x+BLOCK), y2 = Math.min(H-1, y+BLOCK);
+        const area = (x2-x1)*(y2-y1);
+        const sum  = integral[(y2+1)*(W+1)+(x2+1)]
+                   - integral[y1*(W+1)+(x2+1)]
+                   - integral[(y2+1)*(W+1)+x1]
+                   + integral[y1*(W+1)+x1];
+        bin[y*W+x] = sharp[y*W+x] < (sum/area) - DELTA ? 0 : 255;
+      }
+    }
+
+    // 7. Escrever resultado no canvas
+    for (let i = 0; i < W*H; i++) {
+      const v = bin[i];
+      d[i*4]=v; d[i*4+1]=v; d[i*4+2]=v; d[i*4+3]=255;
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    return new Promise((res) => canvas.toBlob(res, "image/png"));
+  }
+
+  // ── Conta quantas linhas "parecem" itens de relatório no texto OCR ────────────
+  function contarLinhasValidas(texto) {
+    let count = 0;
+    for (const linha of (texto||"").split("\n")) {
+      const l = linha.trim();
+      // linha válida: tem pelo menos uma palavra em maiúsculas e um número
+      if (l.length > 5 && /[A-Z]{3}/.test(l) && /\d/.test(l)) count++;
+    }
+    return count;
+  }
+
+  // ── Função principal ─────────────────────────────────────────────────────────
+  async function lerImagem(f) {
+    const imgBitmap = await createImageBitmap(f);
+
+    // Inicializar Tesseract uma única vez (reutilizar worker é mais rápido)
+    setOcrStatus("Iniciando reconhecimento...", 5);
+
+    const worker = await Tesseract.createWorker("por", 1, {
+      logger: (m) => {
+        if (m.status === "recognizing text") {
+          setOcrStatus(`Lendo texto... ${Math.round((m.progress||0)*100)}%`, Math.round((m.progress||0)*100));
+        }
+      },
+    });
+
+    await worker.setParameters({
+      tessedit_pageseg_mode: "6",   // bloco uniforme — ideal para listas
+      tessedit_char_whitelist:
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+        "abcdefghijklmnopqrstuvwxyz" +
+        "0123456789 .,/-:()ÃÕÇÁÀÂÉÊÍÓÔÚãõçáàâéêíóôú",
+      preserve_interword_spaces: "1",
+    });
+
+    // Tentar 4 ângulos: 0°, 90°, 270°, 180°
+    // Na maioria das fotos o ângulo 0 já funciona; os outros cobrem quando o
+    // funcionário segura o celular na horizontal ou de cabeça para baixo.
+    const angulos = [0, 90, 270, 180];
+    let melhorTexto = "";
+    let melhorContagem = -1;
+
+    for (let i = 0; i < angulos.length; i++) {
+      const ang = angulos[i];
+      setOcrStatus(`Tentativa ${i+1}/4 (rotação ${ang}°)...`, 10 + i * 20);
+
+      const blob = await preprocessarImagem(imgBitmap, ang);
+      const { data: { text } } = await worker.recognize(blob);
+      const contagem = contarLinhasValidas(text);
+
+      // Usar o resultado com mais linhas reconhecidas
+      if (contagem > melhorContagem) {
+        melhorContagem = contagem;
+        melhorTexto    = text;
+      }
+
+      // Se já encontrou um resultado bom (≥8 linhas) no ângulo padrão, não precisa testar outros
+      if (ang === 0 && contagem >= 8) break;
+    }
+
+    await worker.terminate();
+    imgBitmap.close();
+
+    // Aviso ao funcionário se a leitura ficou fraca
+    if (melhorContagem < 3) {
+      const tentar = confirm(
+        "⚠️ Poucos itens detectados na foto.\n\n" +
+        "Dicas para uma boa foto:\n" +
+        "• Apoie o cupom numa superfície plana\n" +
+        "• Segure o celular reto, de cima para baixo\n" +
+        "• Certifique-se de que há boa iluminação\n" +
+        "• Todo o texto deve estar visível\n\n" +
+        "Deseja tentar tirar outra foto?"
+      );
+      if (tentar) {
+        document.getElementById("file-input").click();
+        throw new Error("Usuário optou por nova foto");
+      }
+    }
+
+    setOcrStatus("Concluído ✓", 100);
+    return melhorTexto;
+  }
+  // =====================================================================
 
   // -------------------- PARSER V17 --------------------
   function normalizarTexto(s) {
