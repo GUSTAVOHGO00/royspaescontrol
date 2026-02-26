@@ -18,7 +18,10 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
 
 <style>
-  :root { --red:#E30613; --yellow:#FFC20E; --blue:#005C9F; --bg:#F4F7FA; --card:#FFFFFF; --text:#1A202C; --gray:#A0AEC0; }
+  :root {
+    --red:#E30613; --yellow:#FFC20E; --blue:#005C9F;
+    --bg:#F4F7FA; --card:#FFFFFF; --text:#1A202C; --gray:#A0AEC0;
+  }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'DM Sans',sans-serif; background-color:var(--bg); color:var(--text); padding-bottom:90px; }
 
@@ -49,20 +52,51 @@
   .btn-primary{ background:var(--red); color:white; margin-top:10px; }
   .btn-secondary{ background:white; border:2px solid #E2E8F0; color:var(--text); margin-top:10px; }
   .btn-camera{ background:#2D3748; color:white; margin-bottom:10px; }
+  .btn-manual-entry{ background:var(--blue); color:white; margin-bottom:10px; }
+  .btn-sm{ padding:8px 14px; font-size:13px; border-radius:8px; border:none; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:5px; }
 
-  .fab{
-    position:fixed; bottom:24px; right:24px;
-    width:60px; height:60px;
-    background:var(--red); color:white;
-    border-radius:50%; font-size:30px;
-    border:none;
-    box-shadow:0 4px 15px rgba(227,6,19,.4);
-    cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    z-index:9999;
-    pointer-events:auto;
+  /* Tabs para modo de entrada */
+  .input-tabs{ display:flex; gap:8px; margin-bottom:16px; }
+  .tab-btn{
+    flex:1; padding:12px 8px; border:2px solid #E2E8F0; border-radius:12px;
+    background:white; cursor:pointer; font-size:13px; font-weight:700;
+    color:#718096; transition:all .2s; text-align:center; font-family:inherit;
   }
+  .tab-btn.active{ border-color:var(--blue); background:var(--blue); color:white; }
 
+  /* Grid de lançamento manual de itens do relatório */
+  .lancamento-group{ margin-bottom:20px; }
+  .lancamento-group-title{
+    font-size:11px; text-transform:uppercase; font-weight:700; color:white;
+    background:var(--blue); border-radius:8px; padding:6px 12px;
+    margin-bottom:8px; letter-spacing:.5px;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .lancamento-group-title.red{ background:var(--red); }
+  .lancamento-group-title.dark{ background:#2D3748; }
+
+  .lancamento-item{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; background:#F7FAFC;
+    border:1px solid #EDF2F7; border-radius:10px; margin-bottom:6px;
+  }
+  .lancamento-item-name{ flex:1; font-size:13px; font-weight:600; color:#2D3748; line-height:1.3; }
+  .lancamento-item-fator{ font-size:10px; color:var(--gray); font-weight:700; white-space:nowrap; }
+  .lancamento-item-input{
+    width:70px !important; padding:8px !important; font-size:16px !important;
+    text-align:center; border-radius:8px !important; font-weight:700 !important;
+    border:2px solid #E2E8F0 !important;
+  }
+  .lancamento-item-input:focus{ border-color:var(--red) !important; }
+  .lancamento-total-bar{
+    background:linear-gradient(135deg,var(--blue),#003d6e);
+    border-radius:12px; padding:15px 20px; margin-top:12px;
+    display:flex; justify-content:space-between; align-items:center; color:white;
+  }
+  .lancamento-total-label{ font-size:13px; font-weight:600; opacity:.85; }
+  .lancamento-total-value{ font-size:28px; font-weight:800; }
+
+  /* Resultado */
   .result-box{ text-align:center; padding:25px; border-radius:16px; color:white; margin-top:20px; }
   .status-verde{ background:linear-gradient(135deg,#48BB78,#2F855A); }
   .status-amarelo{ background:linear-gradient(135deg,#ECC94B,#D69E2E); color:#333; }
@@ -82,15 +116,62 @@
   .spinner{ width:30px; height:30px; border:3px solid #E2E8F0; border-top:3px solid var(--blue); border-radius:50%; animation:spin 1s infinite linear; margin:0 auto 10px; }
   @keyframes spin{ 100%{ transform:rotate(360deg);} }
 
-  /* progresso OCR */
   #ocr-progress-bar-wrap{ width:100%; background:#E2E8F0; border-radius:8px; height:8px; margin-top:8px; overflow:hidden; }
   #ocr-progress-bar{ height:8px; background:var(--blue); border-radius:8px; width:0%; transition:width .2s; }
   #ocr-status-text{ font-size:12px; color:#718096; margin-top:4px; }
+
+  .fab{
+    position:fixed; bottom:24px; right:24px;
+    width:60px; height:60px; background:var(--red); color:white;
+    border-radius:50%; font-size:30px; border:none;
+    box-shadow:0 4px 15px rgba(227,6,19,.4);
+    cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:9999;
+  }
+
+  /* Aviso de não-edição após cálculo */
+  .aviso-locked{
+    background:#FFF5F5; border:2px solid var(--red); border-radius:12px;
+    padding:14px; margin-top:12px; font-size:13px; color:#822727; font-weight:600;
+    display:flex; align-items:center; gap:10px;
+  }
+
+  .just-box{
+    background:#FFFAF0; border:2px solid var(--yellow); border-radius:12px;
+    padding:16px; margin-top:12px;
+  }
+  .just-box label{ color:#744210; font-weight:700; font-size:13px; }
+  .just-box textarea{
+    margin-top:8px; resize:vertical; min-height:80px;
+    border-color:#ECC94B; font-size:14px;
+  }
+  .just-box textarea:focus{ border-color:var(--yellow); }
+
+  .detalhe-itens-grid{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:10px; }
+  .detalhe-item-pill{ background:#EBF8FF; border-radius:8px; padding:6px 10px; font-size:12px; color:#2B6CB0; font-weight:600; }
+  .detalhe-item-pill span{ float:right; font-weight:800; }
+
+  /* Modal de confirmação anti-fraude */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,.6);
+    z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .modal-box{
+    background:white; border-radius:20px; padding:28px; max-width:360px; width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);
+  }
+  .modal-icon{ font-size:48px; text-align:center; margin-bottom:12px; }
+  .modal-title{ font-size:18px; font-weight:800; color:var(--text); text-align:center; margin-bottom:8px; }
+  .modal-body{ font-size:13px; color:#4A5568; text-align:center; line-height:1.6; margin-bottom:20px; }
+  .modal-actions{ display:flex; gap:10px; }
+  .modal-actions .btn{ margin-top:0; }
+  .btn-danger{ background:var(--red); color:white; }
+  .btn-cancel{ background:#EDF2F7; color:var(--text); }
+
 </style>
 </head>
-
 <body>
 
+<!-- ===================== TELA LISTA ===================== -->
 <div id="screen-list">
   <div class="header">
     <div class="logo-area">
@@ -100,11 +181,12 @@
   </div>
   <div class="container">
     <h2>Histórico Recente</h2>
-    <div id="history-container"><div style="text-align:center; padding:40px; color:#A0AEC0;">📂 Nenhum registro.</div></div>
+    <div id="history-container"><div style="text-align:center;padding:40px;color:#A0AEC0;">📂 Nenhum registro.</div></div>
   </div>
   <button class="fab" type="button" onclick="navTo('screen-new')">+</button>
 </div>
 
+<!-- ===================== TELA NOVO ===================== -->
 <div id="screen-new" class="hidden">
   <div class="header">
     <button class="btn-icon" type="button" onclick="navTo('screen-list')">←</button>
@@ -113,6 +195,7 @@
   </div>
 
   <div class="container">
+    <!-- DADOS GERAIS -->
     <div class="card">
       <h2>1. Dados Gerais</h2>
       <div class="form-group"><label>Data</label><input type="date" id="inp-data" /></div>
@@ -121,53 +204,86 @@
       <div class="form-group"><label>Responsável</label><input type="text" id="inp-resp" placeholder="Nome" /></div>
     </div>
 
+    <!-- CONTAGEM MANUAL (ESTOQUE) -->
     <div class="card">
       <h2>2. Contagem Manual (Estoque)</h2>
+      <div style="background:#FFF5F5;border:1px solid #FEB2B2;border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:#742A2A;">
+        🔒 <b>Atenção:</b> Lance os valores reais do estoque. O total só será revelado após o cálculo final.
+      </div>
       <div id="manual-inputs"></div>
-      <div style="margin-top:15px; background:#EBF8FF; color:#2B6CB0; padding:15px; border-radius:12px; text-align:center; font-weight:700;">
-        Total Utilizados: <span id="manual-total" style="font-size:20px">0</span> eq.
-      </div>
+      <span id="manual-total" style="display:none">0</span>
     </div>
 
+    <!-- LEITURA DO SISTEMA -->
     <div class="card">
-      <h2>3. Leitura do Sistema</h2>
-      <p style="font-size:13px; color:#718096; margin-bottom:15px;">Selecione o <b>PDF</b> ou tire foto.</p>
-      <input type="file" id="file-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)" />
-      <button class="btn btn-camera" type="button" onclick="document.getElementById('file-input').click()">📁 Abrir PDF ou 📸 Foto</button>
+      <h2>3. Leitura do Sistema (Relatório)</h2>
 
-      <div id="ocr-loading" class="loading hidden">
-        <div class="spinner"></div>
-        <span id="ocr-status-text">Analisando arquivo...</span>
-        <div id="ocr-progress-bar-wrap"><div id="ocr-progress-bar"></div></div>
+      <!-- TABS -->
+      <div class="input-tabs">
+        <button class="tab-btn active" id="tab-pdf" onclick="mudarTab('pdf')">📁 PDF / Foto</button>
+        <button class="tab-btn" id="tab-manual" onclick="mudarTab('manual')">✏️ Lançamento Manual</button>
       </div>
 
-      <div id="ocr-result" class="hidden">
-        <div class="form-group" style="margin-top:10px">
-          <label>Total Sistema (Pães 30cm)</label>
-          <input type="number" id="inp-sistema" style="font-size:24px; color:var(--red); font-weight:700;" placeholder="0" step="0.5" />
+      <!-- PAINEL PDF/FOTO -->
+      <div id="painel-pdf">
+        <p style="font-size:13px; color:#718096; margin-bottom:15px;">Selecione o <b>PDF</b> ou tire foto do relatório.</p>
+        <input type="file" id="file-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)" />
+        <button class="btn btn-camera" type="button" onclick="document.getElementById('file-input').click()">📁 Abrir PDF ou 📸 Foto</button>
+
+        <div id="ocr-loading" class="loading hidden">
+          <div class="spinner"></div>
+          <span id="ocr-status-text">Analisando arquivo...</span>
+          <div id="ocr-progress-bar-wrap"><div id="ocr-progress-bar"></div></div>
         </div>
 
-        <div style="margin-top:10px">
-          <div style="font-size:12px; color:var(--blue); cursor:pointer; font-weight:bold" onclick="document.getElementById('lista-itens-ocr').classList.toggle('hidden')">
-            Ver itens detectados ▼
+        <div id="ocr-result" class="hidden">
+          <input type="number" id="inp-sistema-ocr" style="display:none;" />
+          <div style="background:#F0FFF4;border:1px solid #9AE6B4;border-radius:10px;padding:12px;margin-top:10px;font-size:13px;color:#22543D;">
+            ✅ <b>PDF/Foto processado com sucesso.</b> O total calculado será revelado somente após o cálculo final.
           </div>
-          <div id="lista-itens-ocr" class="hidden" style="max-height:150px; overflow-y:auto; background:#f9f9f9; padding:5px; border:1px solid #eee; font-size:11px;"></div>
+          <div style="margin-top:10px">
+            <div style="font-size:12px;color:var(--blue);cursor:pointer;font-weight:bold" onclick="document.getElementById('lista-itens-ocr').classList.toggle('hidden')">
+              Ver itens detectados ▼
+            </div>
+            <div id="lista-itens-ocr" class="hidden" style="max-height:150px;overflow-y:auto;background:#f9f9f9;padding:5px;border:1px solid #eee;font-size:11px;"></div>
+          </div>
         </div>
+      </div>
+
+      <!-- PAINEL LANÇAMENTO MANUAL DE ITENS -->
+      <div id="painel-manual" class="hidden">
+        <p style="font-size:13px;color:#718096;margin-bottom:15px;">
+          Informe a <b>quantidade vendida</b> de cada item conforme o relatório de fechamento. Apenas os que tiverem quantidade.
+        </p>
+
+        <div style="background:#FFF5F5;border:1px solid #FEB2B2;border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:#742A2A;">
+          🔒 <b>Atenção:</b> Lance os valores reais do relatório. O total só será revelado após o cálculo final.
+        </div>
+        <div id="lancamento-container"></div>
+        <span id="lancamento-total-display" style="display:none">0</span>
       </div>
     </div>
 
-    <button class="btn btn-primary" type="button" onclick="calcular()">CALCULAR RESULTADO</button>
+    <!-- BOTÃO CALCULAR -->
+    <button class="btn btn-primary" type="button" id="btn-calcular" onclick="confirmarECalcular()">🔒 CALCULAR RESULTADO</button>
 
+    <!-- ÁREA DE RESULTADO -->
     <div id="result-area" class="hidden">
       <div id="traffic-light" class="result-box">
-        <div style="font-size:48px; margin-bottom:10px" id="res-icon">✅</div>
-        <div style="font-size:36px; font-weight:800" id="res-diff">0</div>
-        <div style="font-size:16px; opacity:0.9" id="res-desc">Sem diferença</div>
+        <div style="font-size:48px;margin-bottom:10px" id="res-icon">✅</div>
+        <div style="font-size:36px;font-weight:800" id="res-diff">0</div>
+        <div style="font-size:16px;opacity:0.9" id="res-desc">Sem diferença</div>
+        <div style="margin-top:8px;font-size:13px;opacity:.8" id="res-detalhe"></div>
       </div>
 
-      <div class="card" style="margin-top:20px">
-        <label>Justificativa (Obrigatória se houver erro)</label>
-        <input type="text" id="inp-just" placeholder="Explique o motivo..." />
+      <div class="aviso-locked">
+        🔒 Os valores foram calculados e não podem ser editados. Se houver diferença, justifique abaixo.
+      </div>
+
+      <div id="just-wrapper" class="just-box hidden">
+        <label>⚠️ Justificativa Obrigatória</label>
+        <p style="font-size:12px;color:#976a00;margin-top:4px">Explique o motivo da diferença entre o estoque físico e o sistema.</p>
+        <textarea id="inp-just" placeholder="Ex: 1 pão 30cm foi descartado por avaria não registrada no sistema..."></textarea>
       </div>
 
       <button class="btn btn-secondary" type="button" onclick="salvar()">💾 SALVAR NO HISTÓRICO</button>
@@ -177,6 +293,25 @@
   </div>
 </div>
 
+
+<!-- ===================== MODAL CONFIRMAÇÃO ===================== -->
+<div id="modal-confirmacao" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-icon">🔒</div>
+    <div class="modal-title">Confirmar Fechamento</div>
+    <div class="modal-body">
+      Você confirma que <b>todos os valores foram lançados corretamente</b>?<br><br>
+      <b>Após confirmar não será possível editar nenhum valor.</b><br>
+      O resultado será calculado e registrado com seu nome.
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" type="button" onclick="fecharModal()">← Revisar</button>
+      <button class="btn btn-danger" type="button" onclick="confirmarDefinitivo()">✅ Confirmar e Calcular</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== TELA DETALHE ===================== -->
 <div id="screen-detail" class="hidden">
   <div class="header">
     <button class="btn-icon" type="button" onclick="navTo('screen-list')">←</button>
@@ -191,546 +326,850 @@
 </div>
 
 <script>
-  // -------------------- MANUAL --------------------
-  const CATEGORIAS = [
-    { id: "abertura", label: "A) Abertura" },
-    { id: "assados", label: "B) Assados/Produzidos" },
-    { id: "desperdicio", label: "C) Desperdícios" },
-    { id: "cortesia", label: "D) Cortesias" },
-    { id: "sobra", label: "E) Sobra Final" },
-  ];
+// ================================================================
+// CATÁLOGO SIMPLIFICADO — agrupado por equivalência
+// ================================================================
+const CATALOGO = [
+  // ── GRUPOS SIMPLES (1 campo = total da categoria) ──────────────
+  {
+    id: "smart",
+    grupo: "Sanduíches Smart",
+    descricao: "Todos os sabores smart (½ pão)",
+    dica: "Some todos os sanduíches smart do relatório e lance o total aqui",
+    fator: 0.5,
+    cor: "blue",
+    tipo: "simples",
+  },
+  {
+    id: "super",
+    grupo: "Sanduíches Super",
+    descricao: "Todos os sabores super (1 pão)",
+    dica: "Some todos os sanduíches super do relatório e lance o total aqui",
+    fator: 1.0,
+    cor: "red",
+    tipo: "simples",
+  },
+  {
+    id: "combo_smart",
+    grupo: "Combos Smart",
+    descricao: "Todos os combos smart (½ pão)",
+    dica: "Some todos os combos smart do relatório e lance o total aqui",
+    fator: 0.5,
+    cor: "blue",
+    tipo: "simples",
+  },
+  {
+    id: "combo_super",
+    grupo: "Combos Super",
+    descricao: "Todos os combos super (1 pão)",
+    dica: "Some todos os combos super do relatório e lance o total aqui",
+    fator: 1.0,
+    cor: "red",
+    tipo: "simples",
+  },
+  {
+    id: "integrador",
+    grupo: "Integrador Padrão",
+    descricao: "Todos os integradores (½ pão)",
+    dica: "Some todos os itens da seção Integrador Padrão e lance o total aqui",
+    fator: 0.5,
+    cor: "blue",
+    tipo: "simples",
+  },
 
-  let dadosManual = {};
-  let itensSistemaDetectados = [];
-  let fechamentoAtual = null;
+  // ── PROMOÇÕES — separadas pois têm fatores diferentes ──────────
+  {
+    id: "promo",
+    grupo: "Promoções",
+    cor: "dark",
+    tipo: "multiplo",
+    itens: [
+      { id:"pra_valer_seg",  label:"Pra Valer — Segunda-feira",  fator:0.5, dica:"½ pão 30cm por unidade" },
+      { id:"pra_valer_ter",  label:"Pra Valer — Terça-feira",    fator:1.0, dica:"1 pão 30cm por unidade" },
+      { id:"pra_valer_qua",  label:"Pra Valer — Quarta-feira",   fator:1.0, dica:"1 pão 30cm por unidade" },
+      { id:"fds_1",          label:"Roy's FDS I",                fator:0.5, dica:"½ pão 30cm por unidade" },
+      { id:"fds_2",          label:"Roy's FDS II",               fator:1.0, dica:"1 pão 30cm por unidade" },
+      { id:"fds_sem",        label:"Roy's FDS (sem numeração)",  fator:1.0, dica:"1 pão 30cm por unidade" },
+    ]
+  },
 
-  window.onload = () => {
-    gerarInputsManual();
-    carregarHistorico();
-    document.getElementById("inp-data").valueAsDate = new Date();
+  // ── OFERTAS — fatores muito distintos, item a item ─────────────
+  {
+    id: "ofertas",
+    grupo: "Ofertas Especiais",
+    cor: "dark",
+    tipo: "multiplo",
+    itens: [
+      { id:"double_smash", label:"Double Smash",  fator:1.0, dica:"1 pão 30cm" },
+      { id:"crispy_lover", label:"Crispy Lover",  fator:1.0, dica:"1 pão 30cm" },
+      { id:"trio_mix",     label:"Trio Mix",      fator:1.5, dica:"1,5 pão 30cm" },
+      { id:"big_king",     label:"Big King",      fator:2.0, dica:"2 pães 30cm" },
+      { id:"mega_mix",     label:"Mega Mix",      fator:2.0, dica:"2 pães 30cm" },
+    ]
+  },
+];
+
+// ================================================================
+// CONFIGURAÇÃO — cole aqui a URL do Google Apps Script
+// ================================================================
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbz5_W1rmSm0cxuuwBNRJHzOxTiZz28d6nyvVDf7x6wlU3_8SFveusaf3qPlI5lQMSzi/exec"; // ← você vai substituir isso no passo a passo
+
+// ================================================================
+// VARS GLOBAIS
+// ================================================================
+const CATEGORIAS = [
+  { id:"abertura",    label:"A) Abertura" },
+  { id:"assados",     label:"B) Assados/Produzidos" },
+  { id:"desperdicio", label:"C) Desperdícios" },
+  { id:"cortesia",    label:"D) Cortesias" },
+  { id:"sobra",       label:"E) Sobra Final" },
+];
+
+let dadosManual = {};
+let itensSistemaDetectados = [];
+let fechamentoAtual = null;
+let registroAtual = null;
+let modoEntrada = "pdf"; // "pdf" ou "manual"
+let calculado = false;
+
+window.onload = () => {
+  gerarInputsManual();
+  gerarLancamentoManual();
+  carregarHistorico();
+  document.getElementById("inp-data").valueAsDate = new Date();
+};
+
+// ================================================================
+// NAVEGAÇÃO
+// ================================================================
+function navTo(id) {
+  ["screen-list","screen-new","screen-detail"].forEach(t => {
+    document.getElementById(t)?.classList.add("hidden");
+  });
+  document.getElementById(id)?.classList.remove("hidden");
+  if (id === "screen-new") resetarForm();
+  if (id === "screen-list") carregarHistorico();
+}
+
+// ================================================================
+// TABS DO MODO DE ENTRADA
+// ================================================================
+function mudarTab(tab) {
+  modoEntrada = tab;
+  document.getElementById("tab-pdf").classList.toggle("active", tab === "pdf");
+  document.getElementById("tab-manual").classList.toggle("active", tab === "manual");
+  document.getElementById("painel-pdf").classList.toggle("hidden", tab !== "pdf");
+  document.getElementById("painel-manual").classList.toggle("hidden", tab !== "manual");
+  // sincroniza total para cálculo
+  if (tab === "manual") calcularTotalLancamento();
+}
+
+// ================================================================
+// CONTAGEM MANUAL DE ESTOQUE
+// ================================================================
+function gerarInputsManual() {
+  const c = document.getElementById("manual-inputs");
+  c.innerHTML = "";
+  CATEGORIAS.forEach(cat => {
+    dadosManual[cat.id] = { q30:0, q15:0 };
+    c.innerHTML += `
+      <div class="bread-row">
+        <div class="bread-row-head">
+          <span>${cat.label}</span>
+          <span class="bread-equiv" id="equiv-${cat.id}">0 eq.</span>
+        </div>
+        <div class="bread-cols">
+          <div class="bread-col">
+            <span>30 CM</span>
+            <input type="number" placeholder="0" oninput="updManual('${cat.id}','q30',this.value)">
+          </div>
+          <div class="bread-col">
+            <span>15 CM</span>
+            <input type="number" placeholder="0" oninput="updManual('${cat.id}','q15',this.value)">
+          </div>
+        </div>
+      </div>`;
+  });
+}
+
+function updManual(id, t, v) {
+  if (calculado) return; // bloqueia após cálculo
+  dadosManual[id][t] = parseInt(v) || 0;
+  document.getElementById(`equiv-${id}`).innerText =
+    (dadosManual[id].q30 + dadosManual[id].q15 * 0.5) + " eq.";
+  const calc = i => dadosManual[i].q30 + dadosManual[i].q15 * 0.5;
+  document.getElementById("manual-total").textContent =
+    calc("abertura") + calc("assados") - calc("desperdicio") - calc("cortesia") - calc("sobra");
+}
+
+// ================================================================
+// LANÇAMENTO MANUAL DE ITENS DO RELATÓRIO
+// ================================================================
+function fatorLabel(f) {
+  if (f === 0.5) return "½ pão 30cm";
+  if (f === 1.0) return "1 pão 30cm";
+  if (f === 1.5) return "1,5 pão 30cm";
+  if (f === 2.0) return "2 pães 30cm";
+  return f + " pão";
+}
+
+function gerarLancamentoManual() {
+  const c = document.getElementById("lancamento-container");
+  c.innerHTML = "";
+
+  CATALOGO.forEach(cat => {
+    const corClass = cat.cor === "red" ? "red" : cat.cor === "dark" ? "dark" : "";
+
+    if (cat.tipo === "simples") {
+      // ── Campo único para toda a categoria ─────────────────────
+      c.innerHTML += `
+        <div class="lancamento-group">
+          <div class="lancamento-group-title ${corClass}">
+            <span>${cat.grupo}</span>
+            <span style="font-size:10px;opacity:.85;">×${cat.fator} = ${fatorLabel(cat.fator)} cada</span>
+          </div>
+          <div class="lancamento-item" style="background:#EBF8FF;border:1px solid #BEE3F8;">
+            <div class="lancamento-item-name" style="color:#2B6CB0;">
+              <b>Total ${cat.grupo}</b>
+              <br><small style="font-weight:400;color:#4A90A4;">${cat.dica}</small>
+            </div>
+            <input class="lancamento-item-input" type="number" min="0" placeholder="0"
+              id="lc_${cat.id}" data-fator="${cat.fator}" data-nome="${cat.grupo}"
+              oninput="calcularTotalLancamento()" />
+          </div>
+        </div>`;
+
+    } else {
+      // ── Múltiplos campos (fatores diferentes) ─────────────────
+      let itensHTML = cat.itens.map(it => `
+        <div class="lancamento-item">
+          <div class="lancamento-item-name">
+            ${it.label}
+            <br><small class="lancamento-item-fator">${it.dica}</small>
+          </div>
+          <input class="lancamento-item-input" type="number" min="0" placeholder="0"
+            id="lc_${it.id}" data-fator="${it.fator}" data-nome="${it.label}"
+            oninput="calcularTotalLancamento()" />
+        </div>`).join("");
+
+      c.innerHTML += `
+        <div class="lancamento-group">
+          <div class="lancamento-group-title ${corClass}">
+            <span>${cat.grupo}</span>
+            <span style="font-size:10px;opacity:.85;">fator varia por item</span>
+          </div>
+          ${itensHTML}
+        </div>`;
+    }
+  });
+}
+
+function calcularTotalLancamento() {
+  let total = 0;
+  const itensDetectados = [];
+
+  document.querySelectorAll("#lancamento-container .lancamento-item-input").forEach(inp => {
+    const qtd = parseInt(inp.value) || 0;
+    const fator = parseFloat(inp.getAttribute("data-fator")) || 0;
+    const nome = inp.getAttribute("data-nome") || "";
+    if (qtd > 0) {
+      total += qtd * fator;
+      itensDetectados.push({ nome, qtd, fator });
+    }
+  });
+
+  total = Math.round(total * 2) / 2;
+  document.getElementById("lancamento-total-display").textContent = total;
+  itensSistemaDetectados = itensDetectados;
+  return total;
+}
+
+// ================================================================
+// OCR / PDF
+// ================================================================
+function sincronizarSistema(origem) {
+  // nada extra por enquanto
+}
+
+async function processarArquivo(inp) {
+  if (!inp.files?.[0]) return;
+  document.getElementById("ocr-loading").classList.remove("hidden");
+  document.getElementById("ocr-result").classList.add("hidden");
+
+  try {
+    const file = inp.files[0];
+    const txt = file.type === "application/pdf" ? await lerPDF(file) : await lerImagem(file);
+    const res = analisarTextoV17(txt);
+
+    document.getElementById("inp-sistema-ocr").value = res.total;
+    itensSistemaDetectados = res.itens;
+
+    document.getElementById("lista-itens-ocr").innerHTML = res.itens
+      .map(i => `<div style="border-bottom:1px solid #ddd;padding:2px"><b>${i.qtd}</b> x ${i.nome}<span style="float:right;color:#777">(×${i.fator})</span></div>`)
+      .join("");
+
+    document.getElementById("ocr-result").classList.remove("hidden");
+  } catch(e) {
+    console.log(e);
+    alert("Erro ao ler. Você pode usar o modo Lançamento Manual.");
+  } finally {
+    document.getElementById("ocr-loading").classList.add("hidden");
+    inp.value = "";
+  }
+}
+
+async function lerPDF(f) {
+  const pdf = await pdfjsLib.getDocument(await f.arrayBuffer()).promise;
+  let fullText = "";
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    let lastY = null, pageText = "";
+    const items = content.items
+      .filter(it => it.str?.trim())
+      .map(it => ({ str:it.str, x:it.transform[4], y:it.transform[5] }))
+      .sort((a,b) => (b.y - a.y) || (a.x - b.x));
+    for (const item of items) {
+      if (lastY !== null && Math.abs(item.y - lastY) > 4) pageText += "\n";
+      else if (lastY !== null) pageText += " ";
+      pageText += item.str;
+      lastY = item.y;
+    }
+    fullText += pageText + "\n";
+  }
+  return fullText;
+}
+
+function setOcrStatus(msg, pct) {
+  const bar = document.getElementById("ocr-progress-bar");
+  const txt = document.getElementById("ocr-status-text");
+  if (bar) bar.style.width = (pct||0)+"%";
+  if (txt) txt.innerText = msg;
+}
+
+async function prepararCanvas(imgBitmap) {
+  const MAX = 2000;
+  const escala = Math.min(MAX/imgBitmap.width, MAX/imgBitmap.height, 2.0);
+  const W = Math.round(imgBitmap.width * escala);
+  const H = Math.round(imgBitmap.height * escala);
+  const canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0,0,W,H);
+  ctx.drawImage(imgBitmap, 0,0,W,H);
+  const canvas2 = document.createElement("canvas");
+  canvas2.width = W; canvas2.height = H;
+  const ctx2 = canvas2.getContext("2d");
+  ctx2.filter = "grayscale(1) contrast(1.6) brightness(1.1)";
+  ctx2.drawImage(canvas, 0,0);
+  return new Promise(res => canvas2.toBlob(res, "image/png"));
+}
+
+function contarLinhasValidas(texto) {
+  return (texto||"").split("\n").filter(l => l.trim().length > 5 && /[A-Z]{3}/i.test(l) && /\d/.test(l)).length;
+}
+
+async function lerImagem(f) {
+  setOcrStatus("Carregando imagem...", 5);
+  const imgBitmap = await createImageBitmap(f);
+  setOcrStatus("Preparando imagem...", 15);
+  const blob = await prepararCanvas(imgBitmap);
+  imgBitmap.close();
+  setOcrStatus("Iniciando OCR...", 20);
+  const worker = await Tesseract.createWorker("por", 1, {
+    logger: m => {
+      if (m.status === "recognizing text") {
+        const pct = 20 + Math.round((m.progress||0)*75);
+        setOcrStatus(`Lendo texto... ${pct}%`, pct);
+      }
+    }
+  });
+  await worker.setParameters({ tessedit_pageseg_mode:"4", preserve_interword_spaces:"1" });
+  const { data:{text} } = await worker.recognize(blob);
+  await worker.terminate();
+  const linhas = contarLinhasValidas(text);
+  if (linhas < 3) {
+    const tentar = confirm("⚠️ Foto com pouco texto reconhecido.\n\nTente novamente com:\n• Superfície plana\n• Celular de cima\n• Boa iluminação\n\nTentar outra foto?");
+    if (tentar) { document.getElementById("file-input").click(); throw new Error("Nova foto"); }
+  }
+  setOcrStatus("Concluído ✓", 100);
+  return text;
+}
+
+// ================================================================
+// PARSER V17
+// ================================================================
+function normalizarTexto(s) {
+  return (s||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[|•·]/g," ").replace(/\s+/g," ").trim();
+}
+function inserirEspacosLetraNumero(s) {
+  return (s||"").replace(/([A-Z])(\d)/g,"$1 $2").replace(/(\d)([A-Z])/g,"$1 $2").replace(/\s+/g," ").trim();
+}
+function extrairItemLinhaV17(l) {
+  if (l.includes("SUB-TOTAL")||l.includes("SUBTOTAL")||l==="TOTAL") return null;
+  const line = (l||"").trim();
+  if (line.length < 5) return null;
+  const tokens = line.split(" ").filter(Boolean);
+  if (tokens.length < 3) return null;
+  const isPreco = t => t==="-"||t==="–"||t==="—"||/^(\d{1,3}(\.\d{3})*|\d+),\d{2}$/.test(t);
+  const last = tokens[tokens.length-1];
+  if (!isPreco(last)) return null;
+  const qtdToken = tokens[tokens.length-2];
+  if (!/^\d{1,3}$/.test(qtdToken)) return null;
+  const qtd = parseInt(qtdToken,10);
+  if (!(qtd>=1&&qtd<=300)) return null;
+  let nomeTokens = tokens.slice(0,-2);
+  if (/^\d{3,5}$/.test(nomeTokens[0])) nomeTokens = nomeTokens.slice(1);
+  const nome = nomeTokens.join(" ").trim();
+  if (!nome||nome.length<2) return null;
+  return { nome, qtd };
+}
+
+function analisarTextoV17(texto) {
+  const linhasOrig = (texto||"").split("\n");
+  const IGNORAR_PALAVRAS = ["BATATA","SALADA","BEBIDA","AGUA","SUCO","REFRI","REFRIGER","REFRIGERANTE","COCA","GUARANA","FANTA","SPRITE","SODA","CHA","CAFE","ENERGETICO","ISOTONICO","MOUSSE","SOBREMESA","BOLO","PUDIM","SORVETE","ADICIONAL","EMBALAGEM","CHIPS","TAXA","ENTREGA"];
+  const SECOES_IGNORAR = ["ADICIONAIS","BEBIDAS","SALADAS","TAXA","BATATA","EMBALAGEM","CHIPS"];
+  const CAT = {
+    PROMO:["PROMOCOES","4.PROMOCOES","4. PROMOCOES"],
+    PRA_VALER:["ROYS PRA VALER","ROYSPRA VALER","PRA VALER"],
+    INTEGRADOR:["INTEGRADOR PADRAO","INTEGRADORPADRAO"],
+    SMART:["1.SANDUICHE SMART","1. SANDUICHE SMART","SANDUICHE SMART","SANDUICHESMART"],
+    SUPER:["2.SANDUICHE SUPER","2. SANDUICHE SUPER","SANDUICHE SUPER","SANDUICHESUPER"],
+    COMBOS_SMART:["3.COMBOS SMART","COMBOS SMART","COMBO SMART","COMBOS NOVOS SMART","COMBOSNOVOSSMART"],
+    COMBOS_SUPER:["COMBOS NOVOS SUPER","COMBOSNOVOSSUPER","COMBOS SUPER","COMBOSUPER"],
+    OFERTAS:["7.OFERTAS ROYS","OFERTAS ROYS","OFERTASROYS","OFERTAS ROY"],
+  };
+  const RE_PRA_VALER=/\bROYS\b.*\bPRA\b.*\bVALER\b|\bPRA\b.*\bVALER\b/;
+  const RE_SEG=/\bSEG\b|\bSEGUNDA\b/;
+  const RE_TER=/\bTER\b|\bTERCA\b|\bTERCAFEIRA\b|\bTERCA-FEIRA\b/;
+  const RE_QUA=/\bQUA\b|\bQUARTA\b/;
+  const RE_FDS_II=/\bROYS\s*FDS\s*II\b|\bFDS\s*II\b|\bFDSII\b/;
+  const RE_FDS_I=/\bROYS\s*FDS\s*I\b|\bFDS\s*I\b|\bFDSI\b/;
+  const RE_FDS_SEM=/\bROYS\s*FDS\b/;
+
+  let total=0, itens=[], categoriaAtual="", dentroPromocoes=false, ignorarPorSecao=false;
+
+  const entrou=(l,lNoSpace,name,arr)=>{
+    const arrNo=arr.map(x=>x.replace(/\s+/g,""));
+    if(arr.some(s=>l.includes(s))||arrNo.some(s=>lNoSpace.includes(s))){
+      categoriaAtual=name; ignorarPorSecao=false;
+      if(name==="PROMO") dentroPromocoes=true;
+      else if(name!=="PRA_VALER") dentroPromocoes=false;
+      return true;
+    }
+    return false;
   };
 
-  function navTo(id) {
-    const telas = ["screen-list", "screen-new", "screen-detail"];
-    telas.forEach((t) => document.getElementById(t)?.classList.add("hidden"));
-    const alvo = document.getElementById(id);
-    if (!alvo) return alert("Tela não encontrada: " + id);
-    alvo.classList.remove("hidden");
-    if (id === "screen-new") resetarForm();
-    if (id === "screen-list") carregarHistorico();
+  for(let raw of linhasOrig){
+    if(!raw||raw.trim().length<2) continue;
+    let l0=normalizarTexto(raw);
+    if(l0.length<3) continue;
+    let l=inserirEspacosLetraNumero(l0);
+    let lNoSpace=l.replace(/\s+/g,"");
+    if(SECOES_IGNORAR.some(k=>l.includes(k))){ ignorarPorSecao=true; continue; }
+    if(entrou(l,lNoSpace,"PROMO",CAT.PROMO)) continue;
+    const maybeItemPre=extrairItemLinhaV17(l);
+    const pareceTituloPraValer=(CAT.PRA_VALER.some(s=>l.includes(s))||CAT.PRA_VALER.map(s=>s.replace(/\s+/g,"")).some(s=>lNoSpace.includes(s)))&&(maybeItemPre===null);
+    if(pareceTituloPraValer){ categoriaAtual=dentroPromocoes?"PRA_VALER":"IGNORAR_PRA_VALER"; continue; }
+    entrou(l,lNoSpace,"INTEGRADOR",CAT.INTEGRADOR);
+    entrou(l,lNoSpace,"SMART",CAT.SMART);
+    entrou(l,lNoSpace,"SUPER",CAT.SUPER);
+    entrou(l,lNoSpace,"COMBOS_SMART",CAT.COMBOS_SMART);
+    entrou(l,lNoSpace,"COMBOS_SUPER",CAT.COMBOS_SUPER);
+    entrou(l,lNoSpace,"OFERTAS",CAT.OFERTAS);
+    if(categoriaAtual==="IGNORAR_PRA_VALER"||ignorarPorSecao) continue;
+    const item=maybeItemPre||extrairItemLinhaV17(l);
+    if(!item) continue;
+    if(IGNORAR_PALAVRAS.some(w=>item.nome.includes(w))) continue;
+    let fator=0;
+    if(categoriaAtual==="PROMO"){
+      if(RE_FDS_II.test(item.nome)) fator=1.0;
+      else if(RE_FDS_I.test(item.nome)) fator=0.5;
+      else if(RE_FDS_SEM.test(item.nome)) fator=1.0;
+      if(fator===0&&RE_PRA_VALER.test(item.nome)){
+        if(RE_SEG.test(item.nome)) fator=0.5;
+        else if(RE_TER.test(item.nome)) fator=1.0;
+        else if(RE_QUA.test(item.nome)) fator=1.0;
+        else fator=0;
+      }
+      if(fator===0) fator=0.5;
+    }
+    if(fator===0&&categoriaAtual==="INTEGRADOR") fator=0.5;
+    if(fator===0&&categoriaAtual==="SMART") fator=0.5;
+    if(fator===0&&categoriaAtual==="SUPER") fator=1.0;
+    if(fator===0&&categoriaAtual==="COMBOS_SMART") fator=0.5;
+    if(fator===0&&categoriaAtual==="COMBOS_SUPER") fator=1.0;
+    if(fator===0&&categoriaAtual==="OFERTAS"){
+      if(item.nome.includes("DOUBLE")&&item.nome.includes("SMASH")) fator=1.0;
+      else if(item.nome.includes("CRISPY")&&item.nome.includes("LOVER")) fator=1.0;
+      else if(item.nome.includes("BIG")&&item.nome.includes("KING")) fator=2.0;
+      else if(item.nome.includes("MEGA")&&item.nome.includes("MIX")) fator=2.0;
+      else if(item.nome.includes("TRIO")&&item.nome.includes("MIX")) fator=1.5;
+      else fator=0;
+    }
+    if(fator<=0) continue;
+    if(categoriaAtual!=="OFERTAS"&&categoriaAtual!=="INTEGRADOR"){
+      const gatilhos=["ROYS","COMBO","SMASH","KING","TRIO","FDS","DOUBLE","MEGA","FRANGO","CARNE","STEAK","ROSBI","PULLED","CAMARAO","CHORIPAN","PRA","VALER"];
+      if(!gatilhos.some(g=>item.nome.includes(g))) continue;
+    }
+    total+=item.qtd*fator;
+    itens.push({ nome:item.nome.slice(0,45), qtd:item.qtd, fator });
+  }
+  total=Math.round(total*2)/2;
+  return { total, itens };
+}
+
+// ================================================================
+// CONFIRMAÇÃO ANTES DE CALCULAR (anti-fraude)
+// ================================================================
+function confirmarECalcular() {
+  // Validações rápidas antes de mostrar o modal
+  const temEstoque = Array.from(document.querySelectorAll("#manual-inputs input"))
+    .some(el => (parseInt(el.value) || 0) > 0);
+
+  if (!temEstoque) {
+    alert("⚠️ Preencha a contagem de estoque antes de calcular.");
+    return;
   }
 
-  function gerarInputsManual() {
-    const c = document.getElementById("manual-inputs");
-    c.innerHTML = "";
-    CATEGORIAS.forEach((cat) => {
-      dadosManual[cat.id] = { q30: 0, q15: 0 };
-      c.innerHTML += `
-        <div class="bread-row">
-          <div class="bread-row-head">
-            <span>${cat.label}</span>
-            <span class="bread-equiv" id="equiv-${cat.id}">0 eq.</span>
-          </div>
-          <div class="bread-cols">
-            <div class="bread-col">
-              <span>30 CM</span>
-              <input type="number" placeholder="0" oninput="updManual('${cat.id}','q30',this.value)">
-            </div>
-            <div class="bread-col">
-              <span>15 CM</span>
-              <input type="number" placeholder="0" oninput="updManual('${cat.id}','q15',this.value)">
-            </div>
-          </div>
-        </div>`;
+  let temSistema = false;
+  if (modoEntrada === "pdf") {
+    temSistema = itensSistemaDetectados.length > 0 ||
+      (parseFloat(document.getElementById("inp-sistema-ocr").value) || 0) > 0;
+  } else {
+    temSistema = Array.from(document.querySelectorAll("#lancamento-container .lancamento-item-input"))
+      .some(el => (parseInt(el.value) || 0) > 0);
+  }
+
+  if (!temSistema) {
+    alert("⚠️ Preencha os dados do sistema (relatório) antes de calcular.");
+    return;
+  }
+
+  // Modal de confirmação
+  document.getElementById("modal-confirmacao").classList.remove("hidden");
+}
+
+function fecharModal() {
+  document.getElementById("modal-confirmacao").classList.add("hidden");
+}
+
+function confirmarDefinitivo() {
+  fecharModal();
+  calcular();
+}
+
+// ================================================================
+// CALCULAR RESULTADO
+// ================================================================
+function calcular() {
+  const manual = parseFloat(document.getElementById("manual-total").textContent) || 0;
+  let sistema = 0;
+
+  if (modoEntrada === "pdf") {
+    sistema = parseFloat(document.getElementById("inp-sistema-ocr").value) || 0;
+    if (sistema === 0 && itensSistemaDetectados.length === 0) {
+      alert("Informe o total do sistema ou carregue um PDF/Foto.");
+      return;
+    }
+  } else {
+    sistema = calcularTotalLancamento();
+    if (sistema === 0 && itensSistemaDetectados.length === 0) {
+      alert("Lance pelo menos um item do relatório.");
+      return;
+    }
+  }
+
+  const diff = sistema - manual;
+  calculado = true;
+
+  // Bloquear inputs de estoque
+  document.querySelectorAll("#manual-inputs input").forEach(el => el.disabled = true);
+  document.querySelectorAll("#lancamento-container .lancamento-item-input").forEach(el => el.disabled = true);
+
+  const card = document.getElementById("traffic-light");
+  document.getElementById("result-area").classList.remove("hidden");
+
+  if (Math.abs(diff) < 0.001) {
+    card.className = "result-box status-verde";
+    document.getElementById("res-icon").innerText = "✅";
+    document.getElementById("res-desc").innerText = "Perfeito! Sem diferença.";
+  } else if (Math.abs(diff) <= 0.5) {
+    card.className = "result-box status-amarelo";
+    document.getElementById("res-icon").innerText = "⚠️";
+    document.getElementById("res-desc").innerText = "Pequena diferença.";
+  } else {
+    card.className = "result-box status-vermelho";
+    document.getElementById("res-icon").innerText = "🛑";
+    document.getElementById("res-desc").innerText = "DIFERENÇA CRÍTICA!";
+  }
+
+  const diffLabel = (diff > 0 ? "+" : "") + diff;
+  document.getElementById("res-diff").innerText = diffLabel;
+  document.getElementById("res-detalhe").innerText =
+    `Manual (estoque): ${manual} eq. | Sistema (vendas): ${sistema} eq.`;
+
+  // Exibir campo de justificativa se houver diferença
+  const diffAbsoluta = Math.abs(diff);
+  if (diffAbsoluta > 0) {
+    document.getElementById("just-wrapper").classList.remove("hidden");
+  } else {
+    document.getElementById("just-wrapper").classList.add("hidden");
+  }
+
+  document.getElementById("result-area").scrollIntoView({ behavior:"smooth" });
+
+  // ── ENVIO AUTOMÁTICO (acontece junto com o cálculo, invisível ao funcionário) ──
+  const manual2 = parseFloat(document.getElementById("manual-total").textContent) || 0;
+  let sistema2 = 0;
+  if (modoEntrada === "pdf") {
+    sistema2 = parseFloat(document.getElementById("inp-sistema-ocr").value) || 0;
+  } else {
+    sistema2 = parseFloat(document.getElementById("lancamento-total-display").textContent) || 0;
+  }
+  const diffNum = sistema2 - manual2;
+  const diffLabel2 = (diffNum > 0 ? "+" : "") + diffNum;
+
+  registroAtual = {
+    id: Date.now(),
+    timestamp: new Date().toISOString(),
+    data: document.getElementById("inp-data").value.split("-").reverse().join("/"),
+    turno: document.getElementById("inp-turno").value,
+    unidade: document.getElementById("inp-unidade").value,
+    resp: document.getElementById("inp-resp").value || "—",
+    manual: manual2,
+    sistema: sistema2,
+    diff: diffLabel2,
+    just: "",
+    modoEntrada,
+    itens: itensSistemaDetectados,
+    enviado: false,
+  };
+
+  // Salva localmente imediatamente (antes de qualquer coisa)
+  salvarLocal(registroAtual);
+  // Tenta enviar para o Google Sheets
+  enviarParaSheets(registroAtual);
+}
+
+// ================================================================
+// SALVAR LOCAL (localStorage — backup offline)
+// ================================================================
+function salvarLocal(registro) {
+  const db = JSON.parse(localStorage.getItem("roys_full_db")||"[]");
+  // Atualiza se já existe (para quando adicionar justificativa depois)
+  const idx = db.findIndex(r => r.id === registro.id);
+  if (idx >= 0) db[idx] = registro;
+  else db.unshift(registro);
+  localStorage.setItem("roys_full_db", JSON.stringify(db));
+}
+
+// ================================================================
+// ENVIAR PARA GOOGLE SHEETS
+// ================================================================
+async function enviarParaSheets(registro) {
+  if (!SHEETS_URL || SHEETS_URL === "SUA_URL_AQUI") return; // não configurado ainda
+
+  try {
+    const itensStr = registro.itens.map(i => `${i.nome}:${i.qtd}×${i.fator}`).join(" | ");
+    const params = new URLSearchParams({
+      timestamp: registro.timestamp,
+      data: registro.data,
+      turno: registro.turno,
+      unidade: registro.unidade,
+      responsavel: registro.resp,
+      estoque_manual: registro.manual,
+      sistema: registro.sistema,
+      diferenca: registro.diff,
+      justificativa: registro.just || "",
+      modo: registro.modoEntrada === "manual" ? "Lançamento Manual" : "PDF/Foto",
+      itens: itensStr,
+      status: Math.abs(parseFloat(registro.diff)||0) < 0.001 ? "OK" :
+              Math.abs(parseFloat(registro.diff)||0) <= 0.5 ? "ATENÇÃO" : "CRÍTICO",
     });
+
+    await fetch(SHEETS_URL + "?" + params.toString(), { method:"GET", mode:"no-cors" });
+
+    // Marca como enviado
+    registro.enviado = true;
+    salvarLocal(registro);
+  } catch(e) {
+    // Falha silenciosa — já está salvo localmente
+    console.warn("Sheets offline, salvo localmente:", e);
+  }
+}
+
+// ================================================================
+// SALVAR JUSTIFICATIVA (após digitar a justificativa)
+// ================================================================
+function salvar() {
+  const diff = document.getElementById("res-diff").innerText;
+  const just = document.getElementById("inp-just").value.trim();
+  const temDiff = diff !== "0" && diff !== "+0";
+
+  if (temDiff && !just) {
+    alert("⚠️ Informe a justificativa antes de finalizar.");
+    document.getElementById("inp-just").focus();
+    return;
   }
 
-  function updManual(id, t, v) {
-    dadosManual[id][t] = parseInt(v) || 0;
-    document.getElementById(`equiv-${id}`).innerText =
-      (dadosManual[id].q30 + dadosManual[id].q15 * 0.5) + " eq.";
-    const calc = (i) => dadosManual[i].q30 + dadosManual[i].q15 * 0.5;
-    document.getElementById("manual-total").innerText =
-      calc("abertura") + calc("assados") - calc("desperdicio") - calc("cortesia") - calc("sobra");
+  // Atualiza o registro com a justificativa e reenvia
+  if (registroAtual) {
+    registroAtual.just = just;
+    salvarLocal(registroAtual);
+    enviarParaSheets(registroAtual); // reenvia com justificativa preenchida
   }
 
-  async function processarArquivo(inp) {
-    if (!inp.files?.[0]) return;
-    document.getElementById("ocr-loading").classList.remove("hidden");
-    document.getElementById("ocr-result").classList.add("hidden");
-
-    try {
-      const file = inp.files[0];
-      const txt = file.type === "application/pdf" ? await lerPDF(file) : await lerImagem(file);
-      const res = analisarTextoV17(txt);
-
-      document.getElementById("inp-sistema").value = res.total;
-      itensSistemaDetectados = res.itens;
-
-      document.getElementById("lista-itens-ocr").innerHTML = res.itens
-        .map((i) => `<div style="border-bottom:1px solid #ddd;padding:2px"><b>${i.qtd}</b> x ${i.nome}<span style="float:right;color:#777">(${i.fator})</span></div>`)
-        .join("");
-
-      document.getElementById("ocr-result").classList.remove("hidden");
-    } catch (e) {
-      console.log(e);
-      alert("Erro ao ler. Você pode digitar manualmente o total do sistema.");
-    } finally {
-      document.getElementById("ocr-loading").classList.add("hidden");
-      inp.value = "";
-    }
-  }
-
-  async function lerPDF(f) {
-    const pdf = await pdfjsLib.getDocument(await f.arrayBuffer()).promise;
-    let fullText = "";
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      let lastY = null;
-      let pageText = "";
-
-      const items = content.items
-        .filter((it) => it.str && it.str.trim().length > 0)
-        .map((it) => ({ str: it.str, x: it.transform[4], y: it.transform[5] }))
-        .sort((a, b) => (b.y - a.y) || (a.x - b.x));
-
-      for (const item of items) {
-        const y = item.y;
-        if (lastY !== null && Math.abs(y - lastY) > 4) pageText += "\n";
-        else if (lastY !== null) pageText += " ";
-        pageText += item.str;
-        lastY = y;
-      }
-      fullText += pageText + "\n";
-    }
-    return fullText;
-  }
-
-  // ======================== lerImagem — VERSÃO SIMPLIFICADA E CONFIÁVEL ========================
-
-  function setOcrStatus(msg, pct) {
-    const bar = document.getElementById("ocr-progress-bar");
-    const txt = document.getElementById("ocr-status-text");
-    if (bar) bar.style.width = (pct || 0) + "%";
-    if (txt) txt.innerText = msg;
-  }
-
-  // Redimensiona e aumenta o contraste SEM binarizar (deixa o Tesseract decidir)
-  async function prepararCanvas(imgBitmap) {
-    // Escalar para largura máxima de 2000px mantendo proporção
-    const MAX = 2000;
-    const escala = Math.min(MAX / imgBitmap.width, MAX / imgBitmap.height, 2.0);
-    const W = Math.round(imgBitmap.width  * escala);
-    const H = Math.round(imgBitmap.height * escala);
-
-    const canvas = document.createElement("canvas");
-    canvas.width  = W;
-    canvas.height = H;
-    const ctx = canvas.getContext("2d");
-
-    // Fundo branco
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0, 0, W, H);
-    ctx.drawImage(imgBitmap, 0, 0, W, H);
-
-    // Aumentar contraste via CSS filter no canvas (funciona em todos os browsers modernos)
-    // Desenhamos novamente num segundo canvas com filter aplicado
-    const canvas2 = document.createElement("canvas");
-    canvas2.width  = W;
-    canvas2.height = H;
-    const ctx2 = canvas2.getContext("2d");
-    ctx2.filter = "grayscale(1) contrast(1.6) brightness(1.1)";
-    ctx2.drawImage(canvas, 0, 0);
-
-    return new Promise((res) => canvas2.toBlob(res, "image/png"));
-  }
-
-  function contarLinhasValidas(texto) {
-    return (texto || "").split("\n").filter(l =>
-      l.trim().length > 5 && /[A-Z]{3}/i.test(l) && /\d/.test(l)
-    ).length;
-  }
-
-  async function lerImagem(f) {
-    setOcrStatus("Carregando imagem...", 5);
-    const imgBitmap = await createImageBitmap(f);
-
-    setOcrStatus("Preparando imagem...", 15);
-    const blob = await prepararCanvas(imgBitmap);
-    imgBitmap.close();
-
-    setOcrStatus("Iniciando OCR...", 20);
-    const worker = await Tesseract.createWorker("por", 1, {
-      logger: (m) => {
-        if (m.status === "recognizing text") {
-          const pct = 20 + Math.round((m.progress || 0) * 75);
-          setOcrStatus(`Lendo texto... ${pct}%`, pct);
-        }
-      },
-    });
-
-    // PSM 4 = assume coluna única de texto com tamanhos variáveis — melhor para cupons
-    await worker.setParameters({
-      tessedit_pageseg_mode: "4",
-      preserve_interword_spaces: "1",
-    });
-
-    const { data: { text } } = await worker.recognize(blob);
-    await worker.terminate();
-
-    const linhas = contarLinhasValidas(text);
-
-    // Se leu muito pouco, avisa e oferece nova tentativa
-    if (linhas < 3) {
-      const tentar = confirm(
-        "⚠️ Foto com pouco texto reconhecido.\n\n" +
-        "Para uma boa leitura:\n" +
-        "• Apoie o cupom em uma superfície plana\n" +
-        "• Segure o celular direto de cima (não na diagonal)\n" +
-        "• Ambiente bem iluminado\n" +
-        "• Todo o texto visível na tela\n\n" +
-        "Tentar outra foto?"
-      );
-      if (tentar) {
-        document.getElementById("file-input").click();
-        throw new Error("Nova foto solicitada");
-      }
-    }
-
-    setOcrStatus("Concluído ✓", 100);
-    return text;
-  }
-  // =====================================================================
-
-  // -------------------- PARSER V17 --------------------
-  function normalizarTexto(s) {
-    return (s || "")
-      .toUpperCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/[|•·]/g, " ")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  function inserirEspacosLetraNumero(s) {
-    return (s || "")
-      .replace(/([A-Z])(\d)/g, "$1 $2")
-      .replace(/(\d)([A-Z])/g, "$1 $2")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-
-  // ✅ extrator robusto: aceita preço "0,00" OU "-"
-  function extrairItemLinhaV17(l) {
-    if (l.includes("SUB-TOTAL") || l.includes("SUBTOTAL") || l === "TOTAL") return null;
-
-    const line = (l || "").trim();
-    if (line.length < 5) return null;
-
-    const tokens = line.split(" ").filter(Boolean);
-    if (tokens.length < 3) return null;
-
-    const isPreco = (t) =>
-      t === "-" || t === "–" || t === "—" ||
-      /^(\d{1,3}(\.\d{3})*|\d+),\d{2}$/.test(t);
-
-    const last = tokens[tokens.length - 1];
-    if (!isPreco(last)) return null;
-
-    const qtdToken = tokens[tokens.length - 2];
-    if (!/^\d{1,3}$/.test(qtdToken)) return null;
-
-    const qtd = parseInt(qtdToken, 10);
-    if (!(qtd >= 1 && qtd <= 300)) return null;
-
-    let nomeTokens = tokens.slice(0, -2);
-    if (/^\d{3,5}$/.test(nomeTokens[0])) nomeTokens = nomeTokens.slice(1);
-
-    const nome = nomeTokens.join(" ").trim();
-    if (!nome || nome.length < 2) return null;
-
-    return { nome, qtd };
-  }
-
-  function analisarTextoV17(texto) {
-    const linhasOrig = (texto || "").split("\n");
-
-    const IGNORAR_PALAVRAS = [
-      "BATATA", "SALADA", "BEBIDA", "AGUA", "SUCO",
-      "REFRI", "REFRIGER", "REFRIGERANTE", "COCA", "GUARANA", "FANTA", "SPRITE", "SODA",
-      "CHA", "CAFE", "ENERGETICO", "ISOTONICO",
-      "MOUSSE", "SOBREMESA", "BOLO", "PUDIM", "SORVETE",
-      "ADICIONAL", "EMBALAGEM", "CHIPS",
-      "TAXA", "ENTREGA"
-    ];
-
-    const SECOES_IGNORAR = ["ADICIONAIS", "BEBIDAS", "SALADAS", "TAXA", "BATATA", "EMBALAGEM", "CHIPS"];
-
-    const CAT = {
-      PROMO: ["PROMOCOES", "4.PROMOCOES", "4. PROMOCOES"],
-      PRA_VALER: ["ROYS PRA VALER", "ROYSPRA VALER", "PRA VALER"],
-      INTEGRADOR: ["INTEGRADOR PADRAO", "INTEGRADORPADRAO"],
-      SMART: ["1.SANDUICHE SMART", "1. SANDUICHE SMART", "SANDUICHE SMART", "SANDUICHESMART"],
-      SUPER: ["2.SANDUICHE SUPER", "2. SANDUICHE SUPER", "SANDUICHE SUPER", "SANDUICHESUPER"],
-      COMBOS_SMART: ["3.COMBOS SMART", "COMBOS SMART", "COMBO SMART", "COMBOS NOVOS SMART", "COMBOSNOVOSSMART"],
-      COMBOS_SUPER: ["COMBOS NOVOS SUPER", "COMBOSNOVOSSUPER", "COMBOS SUPER", "COMBOSUPER"],
-      OFERTAS: ["7.OFERTAS ROYS", "OFERTAS ROYS", "OFERTASROYS", "OFERTAS ROY"],
-    };
-
-    // ✅ ROYS PRA VALER por dia (só dentro de PROMOÇÕES)
-    const RE_PRA_VALER = /\bROYS\b.*\bPRA\b.*\bVALER\b|\bPRA\b.*\bVALER\b/;
-    const RE_SEG = /\bSEG\b|\bSEGUNDA\b/;
-    const RE_TER = /\bTER\b|\bTERCA\b|\bTERCAFEIRA\b|\bTERCA-FEIRA\b/;
-    const RE_QUA = /\bQUA\b|\bQUARTA\b/;
-
-    // ✅ ROYS FDS (PROMOÇÕES)
-    const RE_FDS_II = /\bROYS\s*FDS\s*II\b|\bFDS\s*II\b|\bFDSII\b/;
-    const RE_FDS_I  = /\bROYS\s*FDS\s*I\b|\bFDS\s*I\b|\bFDSI\b/;
-    const RE_FDS_SEM = /\bROYS\s*FDS\b/; // sem I/II => 1 pão
-
-    let total = 0;
-    let itens = [];
-
-    let categoriaAtual = "";
-    let dentroPromocoes = false;
-    let ignorarPorSecao = false;
-
-    const entrou = (l, lNoSpace, name, arr) => {
-      const arrNo = arr.map((x) => x.replace(/\s+/g, ""));
-      if (arr.some((s) => l.includes(s)) || arrNo.some((s) => lNoSpace.includes(s))) {
-        categoriaAtual = name;
-        ignorarPorSecao = false;
-        if (name === "PROMO") dentroPromocoes = true;
-        else if (name !== "PRA_VALER") dentroPromocoes = false;
-        return true;
-      }
-      return false;
-    };
-
-    for (let raw of linhasOrig) {
-      if (!raw || raw.trim().length < 2) continue;
-
-      let l0 = normalizarTexto(raw);
-      if (l0.length < 3) continue;
-
-      let l = inserirEspacosLetraNumero(l0);
-      let lNoSpace = l.replace(/\s+/g, "");
-
-      if (SECOES_IGNORAR.some((k) => l.includes(k))) {
-        ignorarPorSecao = true;
-        continue;
-      }
-
-      if (entrou(l, lNoSpace, "PROMO", CAT.PROMO)) continue;
-
-      // ✅ BUGFIX: só tratar "ROYS PRA VALER" como título se NÃO for item
-      const maybeItemPre = extrairItemLinhaV17(l);
-      const pareceTituloPraValer =
-        (CAT.PRA_VALER.some((s) => l.includes(s)) ||
-         CAT.PRA_VALER.map((s) => s.replace(/\s+/g, "")).some((s) => lNoSpace.includes(s)))
-        && (maybeItemPre === null);
-
-      if (pareceTituloPraValer) {
-        categoriaAtual = dentroPromocoes ? "PRA_VALER" : "IGNORAR_PRA_VALER";
-        continue;
-      }
-
-      entrou(l, lNoSpace, "INTEGRADOR", CAT.INTEGRADOR);
-      entrou(l, lNoSpace, "SMART", CAT.SMART);
-      entrou(l, lNoSpace, "SUPER", CAT.SUPER);
-      entrou(l, lNoSpace, "COMBOS_SMART", CAT.COMBOS_SMART);
-      entrou(l, lNoSpace, "COMBOS_SUPER", CAT.COMBOS_SUPER);
-      entrou(l, lNoSpace, "OFERTAS", CAT.OFERTAS);
-
-      if (categoriaAtual === "IGNORAR_PRA_VALER") continue;
-      if (ignorarPorSecao) continue;
-
-      const item = maybeItemPre || extrairItemLinhaV17(l);
-      if (!item) continue;
-
-      if (IGNORAR_PALAVRAS.some((w) => item.nome.includes(w))) continue;
-
-      let fator = 0;
-
-      // --- PROMOÇÕES: ROYS FDS e ROYS PRA VALER ---
-      if (categoriaAtual === "PROMO") {
-        // FDS: I=0,5 / II=1 / sem = 1
-        if (RE_FDS_II.test(item.nome)) fator = 1.0;
-        else if (RE_FDS_I.test(item.nome)) fator = 0.5;
-        else if (RE_FDS_SEM.test(item.nome)) fator = 1.0;
-
-        // Pra Valer por dia
-        if (fator === 0 && RE_PRA_VALER.test(item.nome)) {
-          if (RE_SEG.test(item.nome)) fator = 0.5;
-          else if (RE_TER.test(item.nome)) fator = 1.0;
-          else if (RE_QUA.test(item.nome)) fator = 1.0;
-          else fator = 0;
-        }
-
-        // fallback promoções (se não for FDS nem Pra Valer)
-        if (fator === 0) fator = 0.5;
-      }
-
-      // INTEGRADOR PADRÃO: sempre 0,5 (exceto blacklist)
-      if (fator === 0 && categoriaAtual === "INTEGRADOR") fator = 0.5;
-
-      // Categorias padrão
-      if (fator === 0 && categoriaAtual === "SMART") fator = 0.5;
-      if (fator === 0 && categoriaAtual === "SUPER") fator = 1.0;
-
-      if (fator === 0 && categoriaAtual === "COMBOS_SMART") fator = 0.5;
-      if (fator === 0 && categoriaAtual === "COMBOS_SUPER") fator = 1.0;
-
-      // OFERTAS (somente permitidos)
-      if (fator === 0 && categoriaAtual === "OFERTAS") {
-        if (item.nome.includes("DOUBLE") && item.nome.includes("SMASH")) fator = 1.0;
-        else if (item.nome.includes("CRISPY") && item.nome.includes("LOVER")) fator = 1.0;
-        else if (item.nome.includes("BIG") && item.nome.includes("KING")) fator = 2.0;
-        else if (item.nome.includes("MEGA") && item.nome.includes("MIX")) fator = 2.0;
-        else if (item.nome.includes("TRIO") && item.nome.includes("MIX")) fator = 1.5;
-        else fator = 0;
-      }
-
-      if (fator <= 0) continue;
-
-      // filtro de segurança NÃO se aplica a OFERTAS nem INTEGRADOR
-      if (categoriaAtual !== "OFERTAS" && categoriaAtual !== "INTEGRADOR") {
-        const gatilhos = ["ROYS","COMBO","SMASH","KING","TRIO","FDS","DOUBLE","MEGA","FRANGO","CARNE","STEAK","ROSBI","PULLED","CAMARAO","CHORIPAN","PRA","VALER"];
-        if (!gatilhos.some((g) => item.nome.includes(g))) continue;
-      }
-
-      total += item.qtd * fator;
-      itens.push({ nome: item.nome.slice(0, 45), qtd: item.qtd, fator });
-    }
-
-    total = Math.round(total * 2) / 2;
-    return { total, itens };
-  }
-
-  // -------------------- RESULT / SAVE / HISTORY --------------------
-  function calcular() {
-    const manual = parseFloat(document.getElementById("manual-total").innerText);
-    const sistema = parseFloat(document.getElementById("inp-sistema").value) || 0;
-    const diff = sistema - manual;
-
-    const card = document.getElementById("traffic-light");
-    document.getElementById("result-area").classList.remove("hidden");
-
-    if (Math.abs(diff) === 0) {
-      card.className = "result-box status-verde";
-      document.getElementById("res-icon").innerText = "✅";
-      document.getElementById("res-desc").innerText = "Perfeito!";
-    } else if (Math.abs(diff) <= 0.5) {
-      card.className = "result-box status-amarelo";
-      document.getElementById("res-icon").innerText = "⚠️";
-      document.getElementById("res-desc").innerText = "Pequena diferença.";
-    } else {
-      card.className = "result-box status-vermelho";
-      document.getElementById("res-icon").innerText = "🛑";
-      document.getElementById("res-desc").innerText = "DIFERENÇA CRÍTICA!";
-    }
-
-    document.getElementById("res-diff").innerText = (diff > 0 ? "+" : "") + diff;
-    document.getElementById("result-area").scrollIntoView({ behavior: "smooth" });
-  }
-
-  function salvar() {
-    const diff = document.getElementById("res-diff").innerText;
-    const just = document.getElementById("inp-just").value;
-    if (diff !== "0" && diff !== "+0" && !just) return alert("Justificativa obrigatória!");
-
-    const registro = {
-      id: Date.now(),
-      data: document.getElementById("inp-data").value.split("-").reverse().join("/"),
-      turno: document.getElementById("inp-turno").value,
-      unidade: document.getElementById("inp-unidade").value,
-      resp: document.getElementById("inp-resp").value,
-      manual: parseFloat(document.getElementById("manual-total").innerText),
-      sistema: parseFloat(document.getElementById("inp-sistema").value) || 0,
-      diff: diff,
-      just: just,
-      itens: itensSistemaDetectados,
-    };
-
-    const db = JSON.parse(localStorage.getItem("roys_full_db") || "[]");
-    db.unshift(registro);
-    localStorage.setItem("roys_full_db", JSON.stringify(db));
-    alert("Salvo!");
-    navTo("screen-list");
-  }
-
-  function carregarHistorico() {
-    const div = document.getElementById("history-container");
-    const db = JSON.parse(localStorage.getItem("roys_full_db") || "[]");
-    if (db.length === 0) return div.innerHTML = '<div style="text-align:center;padding:40px;color:#AAA;">📂 Vazio</div>';
-
-    div.innerHTML = "";
-    db.forEach((r) => {
-      const ok = (r.diff === "0" || r.diff === "+0");
-      div.innerHTML += `
-        <div class="history-item" style="border-left-color:${ok ? "#48BB78" : "#F56565"}" onclick="abrirDetalhe(${r.id})">
-          <div class="history-top"><span>${r.data}</span> <span>${r.turno}</span></div>
-          <div class="history-main">
-            <div class="history-unit">${r.unidade}</div>
-            <div class="tag ${ok ? "tag-ok" : "tag-erro"}">${r.diff}</div>
-          </div>
-        </div>`;
-    });
-  }
-
-  function abrirDetalhe(id) {
-    fechamentoAtual = JSON.parse(localStorage.getItem("roys_full_db") || "[]").find((x) => x.id == id);
-    if (!fechamentoAtual) return;
-
-    const ok = (fechamentoAtual.diff === "0" || fechamentoAtual.diff === "+0");
-
-    document.getElementById("detail-content").innerHTML = `
-      <div class="card">
-        <h2>Resumo</h2>
-        <p><b>Data:</b> ${fechamentoAtual.data}</p>
-        <p><b>Manual:</b> ${fechamentoAtual.manual} | <b>Sistema:</b> ${fechamentoAtual.sistema}</p>
-        <div style="text-align:center;margin-top:10px;font-size:18px;font-weight:bold;color:${ok ? "#48BB78" : "#F56565"}">
-          Diferença: ${fechamentoAtual.diff}
+  alert("✅ Fechamento finalizado!");
+  navTo("screen-list");
+}
+
+// ================================================================
+// HISTÓRICO
+// ================================================================
+function carregarHistorico() {
+  const div = document.getElementById("history-container");
+  const db = JSON.parse(localStorage.getItem("roys_full_db")||"[]");
+  if (db.length === 0) { div.innerHTML = '<div style="text-align:center;padding:40px;color:#AAA;">📂 Vazio</div>'; return; }
+  div.innerHTML = "";
+  db.forEach(r => {
+    const ok = (r.diff==="0"||r.diff==="+0");
+    div.innerHTML += `
+      <div class="history-item" style="border-left-color:${ok?"#48BB78":"#F56565"}" onclick="abrirDetalhe(${r.id})">
+        <div class="history-top"><span>${r.data}</span><span>${r.turno}</span></div>
+        <div class="history-main">
+          <div class="history-unit">${r.unidade}<br><small style="color:#718096;font-size:11px">Resp.: ${r.resp||"—"}</small></div>
+          <div class="tag ${ok?"tag-ok":"tag-erro"}">${r.diff}</div>
         </div>
-        ${fechamentoAtual.just ? `<p style="margin-top:5px">Just: ${fechamentoAtual.just}</p>` : ""}
       </div>`;
-    navTo("screen-detail");
+  });
+}
+
+// ================================================================
+// DETALHE
+// ================================================================
+function abrirDetalhe(id) {
+  fechamentoAtual = JSON.parse(localStorage.getItem("roys_full_db")||"[]").find(x=>x.id==id);
+  if (!fechamentoAtual) return;
+
+  const ok = (fechamentoAtual.diff==="0"||fechamentoAtual.diff==="+0");
+  const modoLabel = fechamentoAtual.modoEntrada === "manual" ? "✏️ Lançamento Manual" : "📁 PDF/Foto";
+
+  let itensHTML = "";
+  if (fechamentoAtual.itens?.length > 0) {
+    itensHTML = `
+      <h2 style="margin-top:15px">Itens do Sistema</h2>
+      <div class="detalhe-itens-grid">
+        ${fechamentoAtual.itens.map(i => `
+          <div class="detalhe-item-pill">
+            ${i.nome}<br>
+            <span>${i.qtd} × ${i.fator} = ${Math.round(i.qtd*i.fator*2)/2}</span>
+          </div>`).join("")}
+      </div>`;
   }
 
-  function exportarPDF() {
-    if (!fechamentoAtual) return;
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+  document.getElementById("detail-content").innerHTML = `
+    <div class="card">
+      <h2>Resumo do Fechamento</h2>
+      <p style="margin-bottom:6px"><b>📅 Data:</b> ${fechamentoAtual.data} — ${fechamentoAtual.turno}</p>
+      <p style="margin-bottom:6px"><b>🏪 Unidade:</b> ${fechamentoAtual.unidade}</p>
+      <p style="margin-bottom:6px"><b>👤 Responsável:</b> ${fechamentoAtual.resp||"—"}</p>
+      <p style="margin-bottom:6px"><b>Modo de Entrada:</b> ${modoLabel}</p>
+      <hr style="margin:12px 0;border:1px solid #EDF2F7;">
+      <p style="margin-bottom:6px"><b>Estoque Manual:</b> ${fechamentoAtual.manual} eq. (pães 30cm)</p>
+      <p style="margin-bottom:6px"><b>Sistema (Vendas):</b> ${fechamentoAtual.sistema} eq. (pães 30cm)</p>
+      <div style="text-align:center;margin-top:12px;font-size:22px;font-weight:800;color:${ok?"#48BB78":"#E30613"}">
+        Diferença: ${fechamentoAtual.diff}
+      </div>
+      ${fechamentoAtual.just ? `
+        <div style="margin-top:12px;background:#FFFAF0;border:1px solid #ECC94B;border-radius:10px;padding:12px;font-size:13px;">
+          <b>Justificativa:</b> ${fechamentoAtual.just}
+        </div>` : ""}
+      ${itensHTML}
+    </div>`;
+  navTo("screen-detail");
+}
 
-    doc.setFillColor(227, 6, 19);
-    doc.rect(0, 0, 210, 20, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.text("Relatório Roy's", 10, 13);
+// ================================================================
+// EXPORTAR PDF
+// ================================================================
+function exportarPDF() {
+  if (!fechamentoAtual) return;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
 
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(12);
-    doc.text(`Data: ${fechamentoAtual.data} | Unidade: ${fechamentoAtual.unidade}`, 10, 30);
-    doc.text(`Manual: ${fechamentoAtual.manual} | Sistema: ${fechamentoAtual.sistema} | Diff: ${fechamentoAtual.diff}`, 10, 40);
+  doc.setFillColor(227,6,19);
+  doc.rect(0,0,210,22,"F");
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(16);
+  doc.text("Relatório de Fechamento — Roy's Sandwich Shop", 10, 14);
 
-    if (fechamentoAtual.itens && fechamentoAtual.itens.length > 0) {
-      doc.autoTable({
-        startY: 50,
-        head: [["Item", "Qtd", "Fator"]],
-        body: fechamentoAtual.itens.map((i) => [i.nome, i.qtd, i.fator]),
-      });
-    }
-    doc.save("fechamento.pdf");
+  doc.setTextColor(0,0,0);
+  doc.setFontSize(11);
+  let y = 32;
+  doc.text(`Data: ${fechamentoAtual.data}  |  Turno: ${fechamentoAtual.turno}  |  Unidade: ${fechamentoAtual.unidade}`, 10, y); y+=8;
+  doc.text(`Responsável: ${fechamentoAtual.resp||"—"}`, 10, y); y+=8;
+  doc.text(`Modo de Entrada: ${fechamentoAtual.modoEntrada === "manual" ? "Lançamento Manual" : "PDF/Foto"}`, 10, y); y+=10;
+
+  doc.setFontSize(12);
+  doc.text(`Estoque Manual: ${fechamentoAtual.manual} eq.`, 10, y); y+=7;
+  doc.text(`Sistema (Vendas): ${fechamentoAtual.sistema} eq.`, 10, y); y+=7;
+  doc.setFontSize(14);
+  doc.setTextColor(fechamentoAtual.diff==="0"||fechamentoAtual.diff==="+0" ? 39 : 227, fechamentoAtual.diff==="0"||fechamentoAtual.diff==="+0" ? 128 : 6, fechamentoAtual.diff==="0"||fechamentoAtual.diff==="+0" ? 60 : 19);
+  doc.text(`Diferença: ${fechamentoAtual.diff}`, 10, y); y+=10;
+
+  if (fechamentoAtual.just) {
+    doc.setTextColor(0,0,0);
+    doc.setFontSize(10);
+    doc.text(`Justificativa: ${fechamentoAtual.just}`, 10, y); y+=10;
   }
 
-  function resetarForm() {
-    document.getElementById("inp-sistema").value = "";
-    document.getElementById("lista-itens-ocr").innerHTML = "";
-    document.getElementById("ocr-result").classList.add("hidden");
-    document.getElementById("result-area").classList.add("hidden");
-    gerarInputsManual();
+  if (fechamentoAtual.itens?.length > 0) {
+    doc.autoTable({
+      startY: y,
+      head: [["Item","Qtd","Fator","Equiv."]],
+      body: fechamentoAtual.itens.map(i => [
+        i.nome, i.qtd, i.fator, Math.round(i.qtd*i.fator*2)/2
+      ]),
+      styles: { fontSize:9 },
+      headStyles: { fillColor:[0,92,159] },
+    });
   }
+  doc.save(`fechamento_${fechamentoAtual.data.replace(/\//g,"-")}.pdf`);
+}
+
+// ================================================================
+// RESETAR FORMULÁRIO
+// ================================================================
+function resetarForm() {
+  calculado = false;
+  modoEntrada = "pdf";
+  itensSistemaDetectados = [];
+
+  // tabs
+  document.getElementById("tab-pdf").classList.add("active");
+  document.getElementById("tab-manual").classList.remove("active");
+  document.getElementById("painel-pdf").classList.remove("hidden");
+  document.getElementById("painel-manual").classList.add("hidden");
+
+  // OCR
+  document.getElementById("inp-sistema-ocr").value = "";
+  document.getElementById("lista-itens-ocr").innerHTML = "";
+  document.getElementById("ocr-result").classList.add("hidden");
+
+  // Resultado
+  document.getElementById("result-area").classList.add("hidden");
+  document.getElementById("just-wrapper").classList.add("hidden");
+  document.getElementById("inp-just").value = "";
+  document.getElementById("lancamento-total-display").textContent = "0";
+
+  // Recriar inputs
+  gerarInputsManual();
+  gerarLancamentoManual();
+
+  document.getElementById("inp-data").valueAsDate = new Date();
+}
 </script>
 </body>
 </html>
