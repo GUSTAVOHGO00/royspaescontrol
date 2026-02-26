@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Roy's — Painel de Fechamentos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --red:#E30613; --yellow:#FFC20E; --blue:#005C9F;
+    --green:#38A169; --orange:#DD6B20;
+    --bg:#F0F4F8; --card:#fff; --text:#1A202C; --gray:#718096;
+    --border:#E2E8F0;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  /* HEADER */
+  .header {
+    background:white; border-bottom:1px solid var(--border);
+    padding:16px 24px; display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,.04);
+  }
+  .header-left { display:flex; align-items:center; gap:14px; }
+  .logo-badge {
+    background:var(--red); color:white; font-weight:800; font-size:18px;
+    width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center;
+  }
+  .header-title h1 { font-size:18px; font-weight:800; color:var(--text); }
+  .header-title p { font-size:12px; color:var(--gray); }
+  .btn-refresh {
+    background:var(--blue); color:white; border:none; border-radius:10px;
+    padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer;
+    display:flex; align-items:center; gap:6px; font-family:inherit;
+  }
+  .btn-refresh:hover { opacity:.9; }
+
+  /* FILTROS */
+  .filters {
+    background:white; border-bottom:1px solid var(--border);
+    padding:12px 24px; display:flex; gap:12px; flex-wrap:wrap; align-items:center;
+  }
+  .filters select, .filters input {
+    padding:8px 12px; border:2px solid var(--border); border-radius:8px;
+    font-size:13px; font-family:inherit; background:#FAFAFA; color:var(--text);
+    cursor:pointer;
+  }
+  .filters select:focus, .filters input:focus { outline:none; border-color:var(--blue); }
+  .filter-label { font-size:12px; font-weight:700; color:var(--gray); }
+  .last-update { font-size:11px; color:var(--gray); margin-left:auto; }
+
+  /* CONTAINER */
+  .container { max-width:1100px; margin:0 auto; padding:24px; }
+
+  /* CARDS RESUMO */
+  .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
+  .summary-card {
+    background:white; border-radius:16px; padding:20px;
+    border:1px solid var(--border); box-shadow:0 2px 6px rgba(0,0,0,.03);
+  }
+  .summary-card .label { font-size:11px; text-transform:uppercase; font-weight:700; color:var(--gray); letter-spacing:.5px; margin-bottom:8px; }
+  .summary-card .value { font-size:32px; font-weight:800; line-height:1; }
+  .summary-card .sub { font-size:12px; color:var(--gray); margin-top:4px; }
+  .val-ok { color:var(--green); }
+  .val-warn { color:var(--orange); }
+  .val-crit { color:var(--red); }
+  .val-blue { color:var(--blue); }
+
+  /* TABELA */
+  .table-card {
+    background:white; border-radius:16px; border:1px solid var(--border);
+    box-shadow:0 2px 6px rgba(0,0,0,.03); overflow:hidden;
+  }
+  .table-header {
+    padding:16px 20px; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .table-header h2 { font-size:15px; font-weight:700; }
+  .table-count { font-size:12px; color:var(--gray); font-weight:600; }
+
+  table { width:100%; border-collapse:collapse; }
+  thead th {
+    background:#F7FAFC; padding:10px 16px; text-align:left;
+    font-size:11px; text-transform:uppercase; color:var(--gray);
+    font-weight:700; letter-spacing:.5px; border-bottom:1px solid var(--border);
+  }
+  tbody tr { border-bottom:1px solid #F7FAFC; transition:background .15s; cursor:pointer; }
+  tbody tr:hover { background:#F7FAFC; }
+  tbody tr:last-child { border-bottom:none; }
+  td { padding:12px 16px; font-size:13px; vertical-align:middle; }
+
+  /* BADGES */
+  .badge {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700;
+    white-space:nowrap;
+  }
+  .badge-ok { background:#C6F6D5; color:#22543D; }
+  .badge-warn { background:#FEFCBF; color:#744210; }
+  .badge-crit { background:#FED7D7; color:#822727; }
+
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .dot-ok { background:var(--green); }
+  .dot-warn { background:var(--orange); }
+  .dot-crit { background:var(--red); }
+
+  /* MODAL DETALHE */
+  .modal-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,.5);
+    z-index:9999; display:flex; align-items:center; justify-content:center;
+    padding:20px;
+  }
+  .modal-box {
+    background:white; border-radius:20px; padding:28px;
+    max-width:500px; width:100%; max-height:85vh; overflow-y:auto;
+    box-shadow:0 20px 60px rgba(0,0,0,.2);
+  }
+  .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
+  .modal-header h2 { font-size:18px; font-weight:800; }
+  .modal-close { background:none; border:none; font-size:24px; cursor:pointer; color:var(--gray); }
+  .detail-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); font-size:14px; }
+  .detail-row:last-child { border-bottom:none; }
+  .detail-label { color:var(--gray); font-weight:600; }
+  .detail-value { font-weight:700; text-align:right; max-width:60%; }
+  .itens-list { margin-top:14px; }
+  .itens-list h3 { font-size:12px; text-transform:uppercase; color:var(--gray); font-weight:700; margin-bottom:8px; letter-spacing:.5px; }
+  .item-pill {
+    display:flex; justify-content:space-between;
+    background:#F7FAFC; border-radius:8px; padding:7px 12px;
+    font-size:12px; margin-bottom:5px;
+  }
+  .item-pill-name { color:var(--text); font-weight:600; }
+  .item-pill-val { color:var(--blue); font-weight:700; }
+
+  /* ESTADO VAZIO / LOADING */
+  .empty-state { text-align:center; padding:60px 20px; color:var(--gray); }
+  .empty-state .icon { font-size:48px; margin-bottom:12px; }
+  .empty-state p { font-size:15px; font-weight:600; }
+  .empty-state small { font-size:13px; }
+
+  .spinner-wrap { text-align:center; padding:40px; }
+  .spinner { width:36px; height:36px; border:3px solid var(--border); border-top:3px solid var(--blue); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 12px; }
+  @keyframes spin { 100%{ transform:rotate(360deg); } }
+
+  /* RESPONSIVO */
+  @media(max-width:700px){
+    .container { padding:16px; }
+    .filters { padding:10px 16px; }
+    .header { padding:12px 16px; }
+    thead th:nth-child(4), td:nth-child(4),
+    thead th:nth-child(5), td:nth-child(5) { display:none; }
+    .summary-grid { grid-template-columns:1fr 1fr; }
+  }
+
+  /* SETUP BANNER */
+  .setup-banner {
+    background:linear-gradient(135deg,#FFF5F5,#FED7D7);
+    border:2px solid #FC8181; border-radius:16px; padding:24px;
+    margin-bottom:24px; text-align:center;
+  }
+  .setup-banner h3 { color:#C53030; font-size:17px; font-weight:800; margin-bottom:8px; }
+  .setup-banner p { color:#742A2A; font-size:13px; line-height:1.6; }
+  .setup-banner code {
+    background:#C53030; color:white; padding:2px 8px; border-radius:6px;
+    font-size:12px; font-family:monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="logo-badge">R</div>
+    <div class="header-title">
+      <h1>Roy's — Painel de Fechamentos</h1>
+      <p id="subtitulo">Carregando dados...</p>
+    </div>
+  </div>
+  <button class="btn-refresh" onclick="carregarDados()">↻ Atualizar</button>
+</div>
+
+<div class="filters">
+  <span class="filter-label">Filtrar:</span>
+  <select id="filtro-unidade" onchange="aplicarFiltros()">
+    <option value="">Todas as unidades</option>
+    <option>Shopping da Ilha</option>
+    <option>Rio Anil</option>
+    <option>Golden Shopping</option>
+    <option>Outra</option>
+  </select>
+  <select id="filtro-status" onchange="aplicarFiltros()">
+    <option value="">Todos os status</option>
+    <option value="OK">✅ OK</option>
+    <option value="ATENÇÃO">⚠️ Atenção</option>
+    <option value="CRÍTICO">🛑 Crítico</option>
+  </select>
+  <input type="date" id="filtro-data" onchange="aplicarFiltros()" placeholder="Data" />
+  <span class="last-update" id="last-update"></span>
+</div>
+
+<div class="container">
+
+  <div id="setup-banner" class="setup-banner" style="display:none">
+    <h3>⚙️ Configure a URL do Google Sheets</h3>
+    <p>
+      Abra este arquivo e substitua o valor de <code>SHEETS_URL</code> pela URL do seu Google Apps Script.<br>
+      Siga o passo a passo do arquivo <b>CONFIGURACAO.md</b>.
+    </p>
+  </div>
+
+  <div class="summary-grid" id="summary-grid">
+    <div class="summary-card"><div class="label">Total de Fechamentos</div><div class="value val-blue" id="s-total">—</div><div class="sub">carregando...</div></div>
+    <div class="summary-card"><div class="label">Sem Diferença ✅</div><div class="value val-ok" id="s-ok">—</div><div class="sub">fechamentos perfeitos</div></div>
+    <div class="summary-card"><div class="label">Atenção ⚠️</div><div class="value val-warn" id="s-warn">—</div><div class="sub">diferença pequena</div></div>
+    <div class="summary-card"><div class="label">Críticos 🛑</div><div class="value val-crit" id="s-crit">—</div><div class="sub">diferença crítica</div></div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <h2>📋 Histórico de Fechamentos</h2>
+      <span class="table-count" id="table-count"></span>
+    </div>
+    <div id="table-area">
+      <div class="spinner-wrap"><div class="spinner"></div><p style="color:#718096;font-size:13px">Buscando fechamentos...</p></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL DETALHE -->
+<div id="modal" class="modal-overlay" style="display:none" onclick="fecharModal(event)">
+  <div class="modal-box" id="modal-box">
+    <div class="modal-header">
+      <h2>Detalhes do Fechamento</h2>
+      <button class="modal-close" onclick="document.getElementById('modal').style.display='none'">×</button>
+    </div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// CONFIGURAÇÃO — substitua pela URL do seu Apps Script
+// ================================================================
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbz5_W1rmSm0cxuuwBNRJHzOxTiZz28d6nyvVDf7x6wlU3_8SFveusaf3qPlI5lQMSzi/exec"; // ← você vai substituir isso
+
+// ================================================================
+// DADOS
+// ================================================================
+let todosRegistros = [];
+let registrosFiltrados = [];
+
+window.onload = () => {
+  if (!SHEETS_URL || SHEETS_URL === "SUA_URL_AQUI") {
+    document.getElementById("setup-banner").style.display = "block";
+    mostrarVazio("Configure a URL do Google Apps Script para ver os dados.");
+    atualizarSummary([]);
+    return;
+  }
+  carregarDados();
+  // Auto-atualiza a cada 2 minutos
+  setInterval(carregarDados, 120000);
+};
+
+async function carregarDados() {
+  document.getElementById("last-update").textContent = "Atualizando...";
+  document.getElementById("subtitulo").textContent = "Buscando fechamentos...";
+
+  try {
+    const url = SHEETS_URL + "?action=listar&t=" + Date.now();
+    const resp = await fetch(url);
+    const json = await resp.json();
+
+    todosRegistros = (json.dados || []).reverse(); // mais recente primeiro
+    aplicarFiltros();
+
+    const agora = new Date().toLocaleTimeString("pt-BR");
+    document.getElementById("last-update").textContent = `Última atualização: ${agora}`;
+    document.getElementById("subtitulo").textContent =
+      `${todosRegistros.length} fechamento(s) registrado(s)`;
+
+  } catch(e) {
+    document.getElementById("last-update").textContent = "Erro ao carregar dados";
+    document.getElementById("subtitulo").textContent = "Verifique a URL configurada";
+    mostrarErro();
+  }
+}
+
+function aplicarFiltros() {
+  const unidade = document.getElementById("filtro-unidade").value;
+  const status  = document.getElementById("filtro-status").value;
+  const data    = document.getElementById("filtro-data").value;
+
+  registrosFiltrados = todosRegistros.filter(r => {
+    if (unidade && r.unidade !== unidade) return false;
+    if (status  && r.status  !== status)  return false;
+    if (data) {
+      // converte dd/mm/yyyy para yyyy-mm-dd para comparar
+      const partes = (r.data||"").split("/");
+      const dataR = partes.length === 3 ? `${partes[2]}-${partes[1]}-${partes[0]}` : "";
+      if (dataR !== data) return false;
+    }
+    return true;
+  });
+
+  atualizarSummary(registrosFiltrados);
+  renderizarTabela(registrosFiltrados);
+}
+
+function atualizarSummary(lista) {
+  const ok   = lista.filter(r => r.status === "OK").length;
+  const warn = lista.filter(r => r.status === "ATENÇÃO").length;
+  const crit = lista.filter(r => r.status === "CRÍTICO").length;
+
+  document.getElementById("s-total").textContent = lista.length;
+  document.getElementById("s-ok").textContent    = ok;
+  document.getElementById("s-warn").textContent  = warn;
+  document.getElementById("s-crit").textContent  = crit;
+}
+
+function statusBadge(status) {
+  if (status === "OK")      return `<span class="badge badge-ok"><span class="dot dot-ok"></span>OK</span>`;
+  if (status === "ATENÇÃO") return `<span class="badge badge-warn"><span class="dot dot-warn"></span>Atenção</span>`;
+  return `<span class="badge badge-crit"><span class="dot dot-crit"></span>Crítico</span>`;
+}
+
+function renderizarTabela(lista) {
+  const area = document.getElementById("table-area");
+  document.getElementById("table-count").textContent =
+    lista.length + " registro(s)";
+
+  if (lista.length === 0) {
+    mostrarVazio("Nenhum fechamento encontrado para os filtros selecionados.");
+    return;
+  }
+
+  area.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Data / Turno</th>
+          <th>Unidade</th>
+          <th>Responsável</th>
+          <th>Estoque</th>
+          <th>Sistema</th>
+          <th>Diferença</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${lista.map((r, idx) => `
+          <tr onclick="abrirDetalhe(${idx})">
+            <td>
+              <b>${r.data||"—"}</b>
+              <br><small style="color:#718096">${r.turno||"—"}</small>
+            </td>
+            <td>${r.unidade||"—"}</td>
+            <td>${r.responsavel||r.resp||"—"}</td>
+            <td style="font-weight:700">${r.estoque_manual||r.manual||"—"}</td>
+            <td style="font-weight:700">${r.sistema||"—"}</td>
+            <td style="font-weight:800;color:${r.status==="OK"?"#38A169":r.status==="ATENÇÃO"?"#DD6B20":"#E30613"}">
+              ${r.diferenca||r.diff||"—"}
+            </td>
+            <td>${statusBadge(r.status||"—")}</td>
+          </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+function mostrarVazio(msg) {
+  document.getElementById("table-area").innerHTML = `
+    <div class="empty-state">
+      <div class="icon">📂</div>
+      <p>Nenhum dado encontrado</p>
+      <small>${msg}</small>
+    </div>`;
+}
+
+function mostrarErro() {
+  document.getElementById("table-area").innerHTML = `
+    <div class="empty-state">
+      <div class="icon">⚠️</div>
+      <p>Erro ao carregar dados</p>
+      <small>Verifique se a URL do Apps Script está correta no arquivo.</small>
+    </div>`;
+  atualizarSummary([]);
+}
+
+function abrirDetalhe(idx) {
+  const r = registrosFiltrados[idx];
+  if (!r) return;
+
+  const itensStr = r.itens || "";
+  let itensHTML = "";
+  if (itensStr && itensStr.trim()) {
+    const partes = itensStr.split(" | ").filter(Boolean);
+    itensHTML = `
+      <div class="itens-list">
+        <h3>Itens Lançados</h3>
+        ${partes.map(p => {
+          const match = p.match(/^(.+):(\d+)×([\d.]+)$/);
+          if (!match) return `<div class="item-pill"><span class="item-pill-name">${p}</span></div>`;
+          const equiv = Math.round(parseInt(match[2]) * parseFloat(match[3]) * 2) / 2;
+          return `<div class="item-pill">
+            <span class="item-pill-name">${match[1]}</span>
+            <span class="item-pill-val">${match[2]} × ${match[3]} = ${equiv} pães</span>
+          </div>`;
+        }).join("")}
+      </div>`;
+  }
+
+  const just = r.justificativa || r.just || "";
+
+  document.getElementById("modal-content").innerHTML = `
+    <div class="detail-row"><span class="detail-label">📅 Data</span><span class="detail-value">${r.data||"—"} — ${r.turno||"—"}</span></div>
+    <div class="detail-row"><span class="detail-label">🏪 Unidade</span><span class="detail-value">${r.unidade||"—"}</span></div>
+    <div class="detail-row"><span class="detail-label">👤 Responsável</span><span class="detail-value">${r.responsavel||r.resp||"—"}</span></div>
+    <div class="detail-row"><span class="detail-label">🕐 Horário</span><span class="detail-value">${r.timestamp ? new Date(r.timestamp).toLocaleString("pt-BR") : "—"}</span></div>
+    <div class="detail-row"><span class="detail-label">📦 Estoque Manual</span><span class="detail-value">${r.estoque_manual||r.manual||"—"} eq.</span></div>
+    <div class="detail-row"><span class="detail-label">💻 Sistema (Vendas)</span><span class="detail-value">${r.sistema||"—"} eq.</span></div>
+    <div class="detail-row">
+      <span class="detail-label">⚖️ Diferença</span>
+      <span class="detail-value" style="color:${r.status==="OK"?"#38A169":r.status==="ATENÇÃO"?"#DD6B20":"#E30613"};font-size:18px">
+        ${r.diferenca||r.diff||"—"}
+      </span>
+    </div>
+    <div class="detail-row"><span class="detail-label">📊 Status</span><span class="detail-value">${statusBadge(r.status||"—")}</span></div>
+    <div class="detail-row"><span class="detail-label">📱 Modo de Entrada</span><span class="detail-value">${r.modo||r.modoEntrada||"—"}</span></div>
+    ${just ? `<div class="detail-row"><span class="detail-label">📝 Justificativa</span><span class="detail-value" style="color:#C05621">${just}</span></div>` : ""}
+    ${itensHTML}
+  `;
+
+  document.getElementById("modal").style.display = "flex";
+}
+
+function fecharModal(e) {
+  if (e.target.id === "modal") document.getElementById("modal").style.display = "none";
+}
+</script>
+</body>
+</html>
