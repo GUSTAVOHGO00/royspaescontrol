@@ -412,7 +412,7 @@ const CATALOGO = [
 // ================================================================
 // CONFIGURAÇÃO — cole aqui a URL do Google Apps Script
 // ================================================================
-const SHEETS_URL = "https://script.google.com/macros/s/AKfycbz5_W1rmSm0cxuuwBNRJHzOxTiZz28d6nyvVDf7x6wlU3_8SFveusaf3qPlI5lQMSzi/exec"; // ← você vai substituir isso no passo a passo
+const SHEETS_URL = "SUA_URL_AQUI"; // ← você vai substituir isso no passo a passo
 
 // ================================================================
 // VARS GLOBAIS
@@ -929,7 +929,7 @@ function calcular() {
     sistema2 = parseFloat(document.getElementById("lancamento-total-display").textContent) || 0;
   }
   const diffNum = sistema2 - manual2;
-  const diffLabel2 = (diffNum > 0 ? "+" : "") + diffNum;
+  const diffLabel2 = String(diffNum); // sem "+" para evitar erro no Google Sheets
 
   registroAtual = {
     id: Date.now(),
