@@ -319,9 +319,18 @@ function atualizarSummary(lista) {
 }
 
 function statusBadge(status) {
-  if (status === "OK")      return `<span class="badge badge-ok"><span class="dot dot-ok"></span>OK</span>`;
-  if (status === "ATENÇÃO") return `<span class="badge badge-warn"><span class="dot dot-warn"></span>Atenção</span>`;
-  return `<span class="badge badge-crit"><span class="dot dot-crit"></span>Crítico</span>`;
+  const s = (status||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  if (s === "OK")      return `<span class="badge badge-ok"><span class="dot dot-ok"></span>OK</span>`;
+  if (s === "ATENCAO") return `<span class="badge badge-warn"><span class="dot dot-warn"></span>Atenção</span>`;
+  if (s === "CRITICO") return `<span class="badge badge-crit"><span class="dot dot-crit"></span>Crítico</span>`;
+  return `<span class="badge badge-crit"><span class="dot dot-crit"></span>${status||"—"}</span>`;
+}
+
+function corDiff(status) {
+  const s = (status||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");
+  if (s === "OK")      return "#38A169";
+  if (s === "ATENCAO") return "#DD6B20";
+  return "#E30613";
 }
 
 function renderizarTabela(lista) {
@@ -358,7 +367,7 @@ function renderizarTabela(lista) {
             <td>${r.responsavel||r.resp||"—"}</td>
             <td style="font-weight:700">${r.estoque_manual||r.manual||"—"}</td>
             <td style="font-weight:700">${r.sistema||"—"}</td>
-            <td style="font-weight:800;color:${r.status==="OK"?"#38A169":r.status==="ATENÇÃO"?"#DD6B20":"#E30613"}">
+            <td style="font-weight:800;color:${corDiff(r.status)}">
               ${r.diferenca||r.diff||"—"}
             </td>
             <td>${statusBadge(r.status||"—")}</td>
@@ -394,18 +403,27 @@ function abrirDetalhe(idx) {
   let itensHTML = "";
   if (itensStr && itensStr.trim()) {
     const partes = itensStr.split(" | ").filter(Boolean);
+    let totalSistema = 0;
+    const itensLinhas = partes.map(p => {
+      // Tenta formato nome:qtdxfator (novo) ou nome:qtd×fator (antigo)
+      const match = p.match(/^(.+):(\d+)[x×]([\d.]+)$/);
+      if (!match) return `<div class="item-pill"><span class="item-pill-name">${p}</span></div>`;
+      const equiv = Math.round(parseInt(match[2]) * parseFloat(match[3]) * 2) / 2;
+      totalSistema += equiv;
+      return `<div class="item-pill">
+        <span class="item-pill-name">${match[1]}</span>
+        <span class="item-pill-val">${match[2]} × ${match[3]} = ${equiv} pães</span>
+      </div>`;
+    }).join("");
+    totalSistema = Math.round(totalSistema * 2) / 2;
     itensHTML = `
-      <div class="itens-list">
-        <h3>Itens Lançados</h3>
-        ${partes.map(p => {
-          const match = p.match(/^(.+):(\d+)×([\d.]+)$/);
-          if (!match) return `<div class="item-pill"><span class="item-pill-name">${p}</span></div>`;
-          const equiv = Math.round(parseInt(match[2]) * parseFloat(match[3]) * 2) / 2;
-          return `<div class="item-pill">
-            <span class="item-pill-name">${match[1]}</span>
-            <span class="item-pill-val">${match[2]} × ${match[3]} = ${equiv} pães</span>
-          </div>`;
-        }).join("")}
+      <div class="itens-list" style="margin-top:16px">
+        <h3>💻 Itens do Sistema — Detalhe</h3>
+        ${itensLinhas}
+        <div class="item-pill" style="background:#EBF8FF;margin-top:4px">
+          <span class="item-pill-name" style="color:#2B6CB0;font-weight:800">TOTAL SISTEMA</span>
+          <span class="item-pill-val" style="font-size:14px;font-weight:800">${totalSistema} eq. pão 30cm</span>
+        </div>
       </div>`;
   }
 
@@ -457,9 +475,9 @@ function abrirDetalhe(idx) {
         <div style="font-size:11px;color:#718096">eq. pão 30cm</div>
       </div>
     </div>
-    <div style="text-align:center;padding:10px;border-radius:10px;background:${r.status==="OK"?"#F0FFF4":r.status==="ATENCAO"?"#FFFFF0":"#FFF5F5"};margin-bottom:4px">
+    <div style="text-align:center;padding:10px;border-radius:10px;background:${corDiff(r.status)==='#38A169'?'#F0FFF4':corDiff(r.status)==='#DD6B20'?'#FFFFF0':'#FFF5F5'};margin-bottom:4px">
       <div style="font-size:11px;color:#718096;font-weight:700;text-transform:uppercase;margin-bottom:2px">Diferença</div>
-      <div style="font-size:28px;font-weight:800;color:${r.status==="OK"?"#38A169":r.status==="ATENCAO"?"#DD6B20":"#E30613"}">
+      <div style="font-size:28px;font-weight:800;color:${corDiff(r.status)}">
         ${r.diferenca||r.diff||"—"}
       </div>
       <div>${statusBadge(r.status||"—")}</div>
