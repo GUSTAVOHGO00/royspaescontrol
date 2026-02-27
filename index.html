@@ -931,6 +931,19 @@ function calcular() {
   const diffNum = sistema2 - manual2;
   const diffLabel2 = String(diffNum); // sem "+" para evitar erro no Google Sheets
 
+  // Captura detalhe do estoque manual
+  const calc = i => dadosManual[i].q30 + dadosManual[i].q15 * 0.5;
+  const estoqueDetalhe = [
+    { cat: "A) Abertura",           q30: dadosManual.abertura.q30,    q15: dadosManual.abertura.q15,    eq: calc("abertura"),    sinal: "+" },
+    { cat: "B) Assados/Produzidos", q30: dadosManual.assados.q30,     q15: dadosManual.assados.q15,     eq: calc("assados"),     sinal: "+" },
+    { cat: "C) Desperdícios",       q30: dadosManual.desperdicio.q30, q15: dadosManual.desperdicio.q15, eq: calc("desperdicio"), sinal: "-" },
+    { cat: "D) Cortesias",          q30: dadosManual.cortesia.q30,    q15: dadosManual.cortesia.q15,    eq: calc("cortesia"),    sinal: "-" },
+    { cat: "E) Sobra Final",        q30: dadosManual.sobra.q30,       q15: dadosManual.sobra.q15,       eq: calc("sobra"),       sinal: "-" },
+  ];
+  const estoqueStr = estoqueDetalhe
+    .map(e => `${e.cat}:${e.q30}x30+${e.q15}x15=${e.eq}eq`)
+    .join(" | ");
+
   registroAtual = {
     id: Date.now(),
     timestamp: new Date().toISOString(),
@@ -944,6 +957,8 @@ function calcular() {
     just: "",
     modoEntrada,
     itens: itensSistemaDetectados,
+    estoqueDetalhe,
+    estoqueStr,
     enviado: false,
   };
 
@@ -969,34 +984,52 @@ function salvarLocal(registro) {
 // ENVIAR PARA GOOGLE SHEETS
 // ================================================================
 async function enviarParaSheets(registro) {
-  if (!SHEETS_URL || SHEETS_URL === "SUA_URL_AQUI") return; // não configurado ainda
+  if (!SHEETS_URL || SHEETS_URL === "SUA_URL_AQUI") return;
 
+  const itensStr = registro.itens.map(i => `${i.nome}:${i.qtd}x${i.fator}`).join(" | ");
+  const statusCalc = Math.abs(parseFloat(registro.diff)||0) < 0.001 ? "OK" :
+                     Math.abs(parseFloat(registro.diff)||0) <= 0.5  ? "ATENCAO" : "CRITICO";
+
+  const params = new URLSearchParams({
+    timestamp:      registro.timestamp,
+    data:           registro.data,
+    turno:          registro.turno,
+    unidade:        registro.unidade,
+    responsavel:    registro.resp,
+    estoque_manual: registro.manual,
+    sistema:        registro.sistema,
+    diferenca:      registro.diff,
+    justificativa:  registro.just || "",
+    modo:           registro.modoEntrada === "manual" ? "Lancamento Manual" : "PDF/Foto",
+    itens:          itensStr,
+    status:         statusCalc,
+    estoque_detalhe: registro.estoqueStr || "",
+  });
+
+  const url = SHEETS_URL + "?" + params.toString();
+
+  // Técnica 1: fetch simples
   try {
-    const itensStr = registro.itens.map(i => `${i.nome}:${i.qtd}×${i.fator}`).join(" | ");
-    const params = new URLSearchParams({
-      timestamp: registro.timestamp,
-      data: registro.data,
-      turno: registro.turno,
-      unidade: registro.unidade,
-      responsavel: registro.resp,
-      estoque_manual: registro.manual,
-      sistema: registro.sistema,
-      diferenca: registro.diff,
-      justificativa: registro.just || "",
-      modo: registro.modoEntrada === "manual" ? "Lançamento Manual" : "PDF/Foto",
-      itens: itensStr,
-      status: Math.abs(parseFloat(registro.diff)||0) < 0.001 ? "OK" :
-              Math.abs(parseFloat(registro.diff)||0) <= 0.5 ? "ATENÇÃO" : "CRÍTICO",
+    await fetch(url, { method: "GET", mode: "no-cors" });
+    registro.enviado = true;
+    salvarLocal(registro);
+    return;
+  } catch(e) {
+    console.warn("fetch falhou, tentando img ping...", e);
+  }
+
+  // Técnica 2: img ping (fallback — funciona mesmo com CORS bloqueado)
+  try {
+    await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = img.onerror = resolve;
+      img.src = url;
+      setTimeout(resolve, 5000); // timeout 5s
     });
-
-    await fetch(SHEETS_URL + "?" + params.toString(), { method:"GET", mode:"no-cors" });
-
-    // Marca como enviado
     registro.enviado = true;
     salvarLocal(registro);
   } catch(e) {
-    // Falha silenciosa — já está salvo localmente
-    console.warn("Sheets offline, salvo localmente:", e);
+    console.warn("img ping falhou:", e);
   }
 }
 
