@@ -55,7 +55,6 @@
   .btn-manual-entry{ background:var(--blue); color:white; margin-bottom:10px; }
   .btn-sm{ padding:8px 14px; font-size:13px; border-radius:8px; border:none; cursor:pointer; font-weight:700; display:inline-flex; align-items:center; gap:5px; }
 
-  /* Tabs para modo de entrada */
   .input-tabs{ display:flex; gap:8px; margin-bottom:16px; }
   .tab-btn{
     flex:1; padding:12px 8px; border:2px solid #E2E8F0; border-radius:12px;
@@ -64,7 +63,6 @@
   }
   .tab-btn.active{ border-color:var(--blue); background:var(--blue); color:white; }
 
-  /* Grid de lançamento manual de itens do relatório */
   .lancamento-group{ margin-bottom:20px; }
   .lancamento-group-title{
     font-size:11px; text-transform:uppercase; font-weight:700; color:white;
@@ -96,7 +94,6 @@
   .lancamento-total-label{ font-size:13px; font-weight:600; opacity:.85; }
   .lancamento-total-value{ font-size:28px; font-weight:800; }
 
-  /* Resultado */
   .result-box{ text-align:center; padding:25px; border-radius:16px; color:white; margin-top:20px; }
   .status-verde{ background:linear-gradient(135deg,#48BB78,#2F855A); }
   .status-amarelo{ background:linear-gradient(135deg,#ECC94B,#D69E2E); color:#333; }
@@ -128,7 +125,6 @@
     cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:9999;
   }
 
-  /* Aviso de não-edição após cálculo */
   .aviso-locked{
     background:#FFF5F5; border:2px solid var(--red); border-radius:12px;
     padding:14px; margin-top:12px; font-size:13px; color:#822727; font-weight:600;
@@ -150,7 +146,6 @@
   .detalhe-item-pill{ background:#EBF8FF; border-radius:8px; padding:6px 10px; font-size:12px; color:#2B6CB0; font-weight:600; }
   .detalhe-item-pill span{ float:right; font-weight:800; }
 
-  /* Modal de confirmação anti-fraude */
   .modal-overlay{
     position:fixed; inset:0; background:rgba(0,0,0,.6);
     z-index:9999; display:flex; align-items:center; justify-content:center; padding:20px;
@@ -166,7 +161,6 @@
   .modal-actions .btn{ margin-top:0; }
   .btn-danger{ background:var(--red); color:white; }
   .btn-cancel{ background:#EDF2F7; color:var(--text); }
-
 </style>
 </head>
 <body>
@@ -195,7 +189,6 @@
   </div>
 
   <div class="container">
-    <!-- DADOS GERAIS -->
     <div class="card">
       <h2>1. Dados Gerais</h2>
       <div class="form-group"><label>Data</label><input type="date" id="inp-data" /></div>
@@ -204,7 +197,6 @@
       <div class="form-group"><label>Responsável</label><input type="text" id="inp-resp" placeholder="Nome" /></div>
     </div>
 
-    <!-- CONTAGEM MANUAL (ESTOQUE) -->
     <div class="card">
       <h2>2. Contagem Manual (Estoque)</h2>
       <div style="background:#FFF5F5;border:1px solid #FEB2B2;border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:#742A2A;">
@@ -214,17 +206,14 @@
       <span id="manual-total" style="display:none">0</span>
     </div>
 
-    <!-- LEITURA DO SISTEMA -->
     <div class="card">
       <h2>3. Leitura do Sistema (Relatório)</h2>
 
-      <!-- TABS -->
       <div class="input-tabs">
         <button class="tab-btn active" id="tab-pdf" onclick="mudarTab('pdf')">📁 PDF / Foto</button>
         <button class="tab-btn" id="tab-manual" onclick="mudarTab('manual')">✏️ Lançamento Manual</button>
       </div>
 
-      <!-- PAINEL PDF/FOTO -->
       <div id="painel-pdf">
         <p style="font-size:13px; color:#718096; margin-bottom:15px;">Selecione o <b>PDF</b> ou tire foto do relatório.</p>
         <input type="file" id="file-input" accept="image/*, application/pdf" style="display:none" onchange="processarArquivo(this)" />
@@ -250,12 +239,10 @@
         </div>
       </div>
 
-      <!-- PAINEL LANÇAMENTO MANUAL DE ITENS -->
       <div id="painel-manual" class="hidden">
         <p style="font-size:13px;color:#718096;margin-bottom:15px;">
-          Informe a <b>quantidade vendida</b> de cada item conforme o relatório de fechamento. Apenas os que tiverem quantidade.
+          Informe a <b>quantidade vendida</b> de cada item conforme o relatório de fechamento.
         </p>
-
         <div style="background:#FFF5F5;border:1px solid #FEB2B2;border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:#742A2A;">
           🔒 <b>Atenção:</b> Lance os valores reais do relatório. O total só será revelado após o cálculo final.
         </div>
@@ -264,10 +251,8 @@
       </div>
     </div>
 
-    <!-- BOTÃO CALCULAR -->
     <button class="btn btn-primary" type="button" id="btn-calcular" onclick="confirmarECalcular()">🔒 CALCULAR RESULTADO</button>
 
-    <!-- ÁREA DE RESULTADO -->
     <div id="result-area" class="hidden">
       <div id="traffic-light" class="result-box">
         <div style="font-size:48px;margin-bottom:10px" id="res-icon">✅</div>
@@ -292,7 +277,6 @@
     <div style="height:60px"></div>
   </div>
 </div>
-
 
 <!-- ===================== MODAL CONFIRMAÇÃO ===================== -->
 <div id="modal-confirmacao" class="modal-overlay hidden">
@@ -327,10 +311,9 @@
 
 <script>
 // ================================================================
-// CATÁLOGO SIMPLIFICADO — agrupado por equivalência
+// CATÁLOGO — atualizado: Roy's Essencial 1 e 2 no lugar de FDS/Pra Valer
 // ================================================================
 const CATALOGO = [
-  // ── GRUPOS SIMPLES (1 campo = total da categoria) ──────────────
   {
     id: "smart",
     grupo: "Sanduíches Smart",
@@ -377,42 +360,38 @@ const CATALOGO = [
     tipo: "simples",
   },
 
-  // ── PROMOÇÕES — separadas pois têm fatores diferentes ──────────
+  // ── PROMOÇÕES — Roy's Essencial 1 e 2 (substituem FDS e Pra Valer) ──
   {
     id: "promo",
     grupo: "Promoções",
     cor: "dark",
     tipo: "multiplo",
     itens: [
-      { id:"pra_valer_seg",  label:"Pra Valer — Segunda-feira",  fator:0.5, dica:"½ pão 30cm por unidade" },
-      { id:"pra_valer_ter",  label:"Pra Valer — Terça-feira",    fator:1.0, dica:"1 pão 30cm por unidade" },
-      { id:"pra_valer_qua",  label:"Pra Valer — Quarta-feira",   fator:1.0, dica:"1 pão 30cm por unidade" },
-      { id:"fds_1",          label:"Roy's FDS I",                fator:0.5, dica:"½ pão 30cm por unidade" },
-      { id:"fds_2",          label:"Roy's FDS II",               fator:1.0, dica:"1 pão 30cm por unidade" },
-      { id:"fds_sem",        label:"Roy's FDS (sem numeração)",  fator:1.0, dica:"1 pão 30cm por unidade" },
+      { id:"essencial_1", label:"Roy's Essencial 1", fator:0.5, dica:"½ pão 30cm por unidade" },
+      { id:"essencial_2", label:"Roy's Essencial 2", fator:1.0, dica:"1 pão 30cm por unidade"  },
     ]
   },
 
-  // ── OFERTAS — fatores muito distintos, item a item ─────────────
+  // ── OFERTAS ────────────────────────────────────────────────────
   {
     id: "ofertas",
     grupo: "Ofertas Especiais",
     cor: "dark",
     tipo: "multiplo",
     itens: [
-      { id:"double_smash", label:"Double Smash",  fator:1.0, dica:"1 pão 30cm" },
-      { id:"crispy_lover", label:"Crispy Lover",  fator:1.0, dica:"1 pão 30cm" },
-      { id:"trio_mix",     label:"Trio Mix",      fator:1.5, dica:"1,5 pão 30cm" },
-      { id:"big_king",     label:"Big King",      fator:2.0, dica:"2 pães 30cm" },
-      { id:"mega_mix",     label:"Mega Mix",      fator:2.0, dica:"2 pães 30cm" },
+      { id:"double_smash", label:"Double Smash",  fator:1.0, dica:"1 pão 30cm"     },
+      { id:"crispy_lover", label:"Crispy Lover",  fator:1.0, dica:"1 pão 30cm"     },
+      { id:"trio_mix",     label:"Trio Mix",      fator:1.5, dica:"1,5 pão 30cm"   },
+      { id:"big_king",     label:"Big King",      fator:2.0, dica:"2 pães 30cm"    },
+      { id:"mega_mix",     label:"Mega Mix",      fator:2.0, dica:"2 pães 30cm"    },
     ]
   },
 ];
 
 // ================================================================
-// CONFIGURAÇÃO — cole aqui a URL do Google Apps Script
+// CONFIGURAÇÃO — URL do Google Apps Script
 // ================================================================
-const SHEETS_URL = "https://script.google.com/macros/s/AKfycbz5_W1rmSm0cxuuwBNRJHzOxTiZz28d6nyvVDf7x6wlU3_8SFveusaf3qPlI5lQMSzi/exec"; // ← você vai substituir isso no passo a passo
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbz5_W1rmSm0cxuuwBNRJHzOxTiZz28d6nyvVDf7x6wlU3_8SFveusaf3qPlI5lQMSzi/exec";
 
 // ================================================================
 // VARS GLOBAIS
@@ -429,7 +408,7 @@ let dadosManual = {};
 let itensSistemaDetectados = [];
 let fechamentoAtual = null;
 let registroAtual = null;
-let modoEntrada = "pdf"; // "pdf" ou "manual"
+let modoEntrada = "pdf";
 let calculado = false;
 
 window.onload = () => {
@@ -452,7 +431,7 @@ function navTo(id) {
 }
 
 // ================================================================
-// TABS DO MODO DE ENTRADA
+// TABS
 // ================================================================
 function mudarTab(tab) {
   modoEntrada = tab;
@@ -460,7 +439,6 @@ function mudarTab(tab) {
   document.getElementById("tab-manual").classList.toggle("active", tab === "manual");
   document.getElementById("painel-pdf").classList.toggle("hidden", tab !== "pdf");
   document.getElementById("painel-manual").classList.toggle("hidden", tab !== "manual");
-  // sincroniza total para cálculo
   if (tab === "manual") calcularTotalLancamento();
 }
 
@@ -493,7 +471,7 @@ function gerarInputsManual() {
 }
 
 function updManual(id, t, v) {
-  if (calculado) return; // bloqueia após cálculo
+  if (calculado) return;
   dadosManual[id][t] = parseInt(v) || 0;
   document.getElementById(`equiv-${id}`).innerText =
     (dadosManual[id].q30 + dadosManual[id].q15 * 0.5) + " eq.";
@@ -521,7 +499,6 @@ function gerarLancamentoManual() {
     const corClass = cat.cor === "red" ? "red" : cat.cor === "dark" ? "dark" : "";
 
     if (cat.tipo === "simples") {
-      // ── Campo único para toda a categoria ─────────────────────
       c.innerHTML += `
         <div class="lancamento-group">
           <div class="lancamento-group-title ${corClass}">
@@ -538,9 +515,7 @@ function gerarLancamentoManual() {
               oninput="calcularTotalLancamento()" />
           </div>
         </div>`;
-
     } else {
-      // ── Múltiplos campos (fatores diferentes) ─────────────────
       let itensHTML = cat.itens.map(it => `
         <div class="lancamento-item">
           <div class="lancamento-item-name">
@@ -587,10 +562,6 @@ function calcularTotalLancamento() {
 // ================================================================
 // OCR / PDF
 // ================================================================
-function sincronizarSistema(origem) {
-  // nada extra por enquanto
-}
-
 async function processarArquivo(inp) {
   if (!inp.files?.[0]) return;
   document.getElementById("ocr-loading").classList.remove("hidden");
@@ -599,7 +570,7 @@ async function processarArquivo(inp) {
   try {
     const file = inp.files[0];
     const txt = file.type === "application/pdf" ? await lerPDF(file) : await lerImagem(file);
-    const res = analisarTextoV17(txt);
+    const res = analisarTextoV18(txt);
 
     document.getElementById("inp-sistema-ocr").value = res.total;
     itensSistemaDetectados = res.itens;
@@ -697,7 +668,7 @@ async function lerImagem(f) {
 }
 
 // ================================================================
-// PARSER V17
+// PARSER V18 — Roy's Essencial 1 e 2 (sem FDS / Pra Valer)
 // ================================================================
 function normalizarTexto(s) {
   return (s||"").toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"")
@@ -706,7 +677,7 @@ function normalizarTexto(s) {
 function inserirEspacosLetraNumero(s) {
   return (s||"").replace(/([A-Z])(\d)/g,"$1 $2").replace(/(\d)([A-Z])/g,"$1 $2").replace(/\s+/g," ").trim();
 }
-function extrairItemLinhaV17(l) {
+function extrairItemLinhaV18(l) {
   if (l.includes("SUB-TOTAL")||l.includes("SUBTOTAL")||l==="TOTAL") return null;
   const line = (l||"").trim();
   if (line.length < 5) return null;
@@ -726,112 +697,120 @@ function extrairItemLinhaV17(l) {
   return { nome, qtd };
 }
 
-function analisarTextoV17(texto) {
+function analisarTextoV18(texto) {
   const linhasOrig = (texto||"").split("\n");
-  const IGNORAR_PALAVRAS = ["BATATA","SALADA","BEBIDA","AGUA","SUCO","REFRI","REFRIGER","REFRIGERANTE","COCA","GUARANA","FANTA","SPRITE","SODA","CHA","CAFE","ENERGETICO","ISOTONICO","MOUSSE","SOBREMESA","BOLO","PUDIM","SORVETE","ADICIONAL","EMBALAGEM","CHIPS","TAXA","ENTREGA"];
+
+  const IGNORAR_PALAVRAS = [
+    "BATATA","SALADA","BEBIDA","AGUA","SUCO","REFRI","REFRIGER","REFRIGERANTE",
+    "COCA","GUARANA","FANTA","SPRITE","SODA","CHA","CAFE","ENERGETICO","ISOTONICO",
+    "MOUSSE","SOBREMESA","BOLO","PUDIM","SORVETE","ADICIONAL","EMBALAGEM",
+    "CHIPS","TAXA","ENTREGA"
+  ];
   const SECOES_IGNORAR = ["ADICIONAIS","BEBIDAS","SALADAS","TAXA","BATATA","EMBALAGEM","CHIPS"];
+
   const CAT = {
-    PROMO:["PROMOCOES","4.PROMOCOES","4. PROMOCOES"],
-    PRA_VALER:["ROYS PRA VALER","ROYSPRA VALER","PRA VALER"],
-    INTEGRADOR:["INTEGRADOR PADRAO","INTEGRADORPADRAO"],
-    SMART:["1.SANDUICHE SMART","1. SANDUICHE SMART","SANDUICHE SMART","SANDUICHESMART"],
-    SUPER:["2.SANDUICHE SUPER","2. SANDUICHE SUPER","SANDUICHE SUPER","SANDUICHESUPER"],
-    COMBOS_SMART:["3.COMBOS SMART","COMBOS SMART","COMBO SMART","COMBOS NOVOS SMART","COMBOSNOVOSSMART"],
-    COMBOS_SUPER:["COMBOS NOVOS SUPER","COMBOSNOVOSSUPER","COMBOS SUPER","COMBOSUPER"],
-    OFERTAS:["7.OFERTAS ROYS","OFERTAS ROYS","OFERTASROYS","OFERTAS ROY"],
+    PROMO:          ["PROMOCOES","4.PROMOCOES","4. PROMOCOES"],
+    ESSENCIAL:      ["ROYS ESSENCIAL","ROY'S ESSENCIAL","ROYSESSENCIAL"],
+    INTEGRADOR:     ["INTEGRADOR PADRAO","INTEGRADORPADRAO"],
+    SMART:          ["1.SANDUICHE SMART","1. SANDUICHE SMART","SANDUICHE SMART","SANDUICHESMART"],
+    SUPER:          ["2.SANDUICHE SUPER","2. SANDUICHE SUPER","SANDUICHE SUPER","SANDUICHESUPER"],
+    COMBOS_SMART:   ["3.COMBOS SMART","COMBOS SMART","COMBO SMART","COMBOS NOVOS SMART","COMBOSNOVOSSMART"],
+    COMBOS_SUPER:   ["COMBOS NOVOS SUPER","COMBOSNOVOSSUPER","COMBOS SUPER","COMBOSUPER"],
+    OFERTAS:        ["7.OFERTAS ROYS","OFERTAS ROYS","OFERTASROYS","OFERTAS ROY"],
   };
-  const RE_PRA_VALER=/\bROYS\b.*\bPRA\b.*\bVALER\b|\bPRA\b.*\bVALER\b/;
-  const RE_SEG=/\bSEG\b|\bSEGUNDA\b/;
-  const RE_TER=/\bTER\b|\bTERCA\b|\bTERCAFEIRA\b|\bTERCA-FEIRA\b/;
-  const RE_QUA=/\bQUA\b|\bQUARTA\b/;
-  const RE_FDS_II=/\bROYS\s*FDS\s*II\b|\bFDS\s*II\b|\bFDSII\b/;
-  const RE_FDS_I=/\bROYS\s*FDS\s*I\b|\bFDS\s*I\b|\bFDSI\b/;
-  const RE_FDS_SEM=/\bROYS\s*FDS\b/;
 
-  let total=0, itens=[], categoriaAtual="", dentroPromocoes=false, ignorarPorSecao=false;
+  // Regex para detectar Essencial 1 e Essencial 2 no nome do item
+  const RE_ESSENCIAL_1 = /\bESSENCIAL\s*1\b/;
+  const RE_ESSENCIAL_2 = /\bESSENCIAL\s*2\b/;
 
-  const entrou=(l,lNoSpace,name,arr)=>{
-    const arrNo=arr.map(x=>x.replace(/\s+/g,""));
-    if(arr.some(s=>l.includes(s))||arrNo.some(s=>lNoSpace.includes(s))){
-      categoriaAtual=name; ignorarPorSecao=false;
-      if(name==="PROMO") dentroPromocoes=true;
-      else if(name!=="PRA_VALER") dentroPromocoes=false;
+  let total = 0, itens = [], categoriaAtual = "", dentroPromocoes = false, ignorarPorSecao = false;
+
+  const entrou = (l, lNoSpace, name, arr) => {
+    const arrNo = arr.map(x => x.replace(/\s+/g,""));
+    if (arr.some(s => l.includes(s)) || arrNo.some(s => lNoSpace.includes(s))) {
+      categoriaAtual = name;
+      ignorarPorSecao = false;
+      if (name === "PROMO") dentroPromocoes = true;
+      else if (name !== "ESSENCIAL") dentroPromocoes = false;
       return true;
     }
     return false;
   };
 
-  for(let raw of linhasOrig){
-    if(!raw||raw.trim().length<2) continue;
-    let l0=normalizarTexto(raw);
-    if(l0.length<3) continue;
-    let l=inserirEspacosLetraNumero(l0);
-    let lNoSpace=l.replace(/\s+/g,"");
-    if(SECOES_IGNORAR.some(k=>l.includes(k))){ ignorarPorSecao=true; continue; }
-    if(entrou(l,lNoSpace,"PROMO",CAT.PROMO)) continue;
-    const maybeItemPre=extrairItemLinhaV17(l);
-    const pareceTituloPraValer=(CAT.PRA_VALER.some(s=>l.includes(s))||CAT.PRA_VALER.map(s=>s.replace(/\s+/g,"")).some(s=>lNoSpace.includes(s)))&&(maybeItemPre===null);
-    if(pareceTituloPraValer){ categoriaAtual=dentroPromocoes?"PRA_VALER":"IGNORAR_PRA_VALER"; continue; }
-    entrou(l,lNoSpace,"INTEGRADOR",CAT.INTEGRADOR);
-    entrou(l,lNoSpace,"SMART",CAT.SMART);
-    entrou(l,lNoSpace,"SUPER",CAT.SUPER);
-    entrou(l,lNoSpace,"COMBOS_SMART",CAT.COMBOS_SMART);
-    entrou(l,lNoSpace,"COMBOS_SUPER",CAT.COMBOS_SUPER);
-    entrou(l,lNoSpace,"OFERTAS",CAT.OFERTAS);
-    if(categoriaAtual==="IGNORAR_PRA_VALER"||ignorarPorSecao) continue;
-    const item=maybeItemPre||extrairItemLinhaV17(l);
-    if(!item) continue;
-    if(IGNORAR_PALAVRAS.some(w=>item.nome.includes(w))) continue;
-    let fator=0;
-    if(categoriaAtual==="PROMO"){
-      if(RE_FDS_II.test(item.nome)) fator=1.0;
-      else if(RE_FDS_I.test(item.nome)) fator=0.5;
-      else if(RE_FDS_SEM.test(item.nome)) fator=1.0;
-      if(fator===0&&RE_PRA_VALER.test(item.nome)){
-        if(RE_SEG.test(item.nome)) fator=0.5;
-        else if(RE_TER.test(item.nome)) fator=1.0;
-        else if(RE_QUA.test(item.nome)) fator=1.0;
-        else fator=0;
-      }
-      if(fator===0) fator=0.5;
+  for (let raw of linhasOrig) {
+    if (!raw || raw.trim().length < 2) continue;
+    let l0 = normalizarTexto(raw);
+    if (l0.length < 3) continue;
+    let l = inserirEspacosLetraNumero(l0);
+    let lNoSpace = l.replace(/\s+/g,"");
+
+    if (SECOES_IGNORAR.some(k => l.includes(k))) { ignorarPorSecao = true; continue; }
+
+    if (entrou(l, lNoSpace, "PROMO",        CAT.PROMO))        continue;
+    if (entrou(l, lNoSpace, "ESSENCIAL",    CAT.ESSENCIAL))    continue;
+    if (entrou(l, lNoSpace, "INTEGRADOR",   CAT.INTEGRADOR))   continue;
+    if (entrou(l, lNoSpace, "SMART",        CAT.SMART))        continue;
+    if (entrou(l, lNoSpace, "SUPER",        CAT.SUPER))        continue;
+    if (entrou(l, lNoSpace, "COMBOS_SMART", CAT.COMBOS_SMART)) continue;
+    if (entrou(l, lNoSpace, "COMBOS_SUPER", CAT.COMBOS_SUPER)) continue;
+    if (entrou(l, lNoSpace, "OFERTAS",      CAT.OFERTAS))      continue;
+
+    if (ignorarPorSecao) continue;
+
+    const item = extrairItemLinhaV18(l);
+    if (!item) continue;
+    if (IGNORAR_PALAVRAS.some(w => item.nome.includes(w))) continue;
+
+    let fator = 0;
+
+    // ── Promoções: Roy's Essencial 1 (0.5) e Roy's Essencial 2 (1.0) ──
+    if (categoriaAtual === "PROMO" || categoriaAtual === "ESSENCIAL") {
+      if (RE_ESSENCIAL_2.test(item.nome))      fator = 1.0;
+      else if (RE_ESSENCIAL_1.test(item.nome)) fator = 0.5;
+      else fator = 0.5; // fallback para qualquer outro item de promoção
     }
-    if(fator===0&&categoriaAtual==="INTEGRADOR") fator=0.5;
-    if(fator===0&&categoriaAtual==="SMART") fator=0.5;
-    if(fator===0&&categoriaAtual==="SUPER") fator=1.0;
-    if(fator===0&&categoriaAtual==="COMBOS_SMART") fator=0.5;
-    if(fator===0&&categoriaAtual==="COMBOS_SUPER") fator=1.0;
-    if(fator===0&&categoriaAtual==="OFERTAS"){
-      if(item.nome.includes("DOUBLE")&&item.nome.includes("SMASH")) fator=1.0;
-      else if(item.nome.includes("CRISPY")&&item.nome.includes("LOVER")) fator=1.0;
-      else if(item.nome.includes("BIG")&&item.nome.includes("KING")) fator=2.0;
-      else if(item.nome.includes("MEGA")&&item.nome.includes("MIX")) fator=2.0;
-      else if(item.nome.includes("TRIO")&&item.nome.includes("MIX")) fator=1.5;
-      else fator=0;
+
+    if (fator === 0 && categoriaAtual === "INTEGRADOR")   fator = 0.5;
+    if (fator === 0 && categoriaAtual === "SMART")        fator = 0.5;
+    if (fator === 0 && categoriaAtual === "SUPER")        fator = 1.0;
+    if (fator === 0 && categoriaAtual === "COMBOS_SMART") fator = 0.5;
+    if (fator === 0 && categoriaAtual === "COMBOS_SUPER") fator = 1.0;
+
+    if (fator === 0 && categoriaAtual === "OFERTAS") {
+      if      (item.nome.includes("DOUBLE") && item.nome.includes("SMASH")) fator = 1.0;
+      else if (item.nome.includes("CRISPY") && item.nome.includes("LOVER")) fator = 1.0;
+      else if (item.nome.includes("BIG")    && item.nome.includes("KING"))  fator = 2.0;
+      else if (item.nome.includes("MEGA")   && item.nome.includes("MIX"))   fator = 2.0;
+      else if (item.nome.includes("TRIO")   && item.nome.includes("MIX"))   fator = 1.5;
+      else fator = 0;
     }
-    if(fator<=0) continue;
-    if(categoriaAtual!=="OFERTAS"&&categoriaAtual!=="INTEGRADOR"){
-      const gatilhos=["ROYS","COMBO","SMASH","KING","TRIO","FDS","DOUBLE","MEGA","FRANGO","CARNE","STEAK","ROSBI","PULLED","CAMARAO","CHORIPAN","PRA","VALER"];
-      if(!gatilhos.some(g=>item.nome.includes(g))) continue;
+
+    if (fator <= 0) continue;
+
+    if (categoriaAtual !== "OFERTAS" && categoriaAtual !== "INTEGRADOR") {
+      const gatilhos = [
+        "ROYS","COMBO","SMASH","KING","TRIO","ESSENCIAL",
+        "DOUBLE","MEGA","FRANGO","CARNE","STEAK","ROSBI",
+        "PULLED","CAMARAO","CHORIPAN"
+      ];
+      if (!gatilhos.some(g => item.nome.includes(g))) continue;
     }
-    total+=item.qtd*fator;
-    itens.push({ nome:item.nome.slice(0,45), qtd:item.qtd, fator });
+
+    total += item.qtd * fator;
+    itens.push({ nome: item.nome.slice(0,45), qtd: item.qtd, fator });
   }
-  total=Math.round(total*2)/2;
+
+  total = Math.round(total * 2) / 2;
   return { total, itens };
 }
 
 // ================================================================
-// CONFIRMAÇÃO ANTES DE CALCULAR (anti-fraude)
+// CONFIRMAÇÃO ANTI-FRAUDE
 // ================================================================
 function confirmarECalcular() {
-  // Validações rápidas antes de mostrar o modal
   const temEstoque = Array.from(document.querySelectorAll("#manual-inputs input"))
     .some(el => (parseInt(el.value) || 0) > 0);
-
-  if (!temEstoque) {
-    alert("⚠️ Preencha a contagem de estoque antes de calcular.");
-    return;
-  }
+  if (!temEstoque) { alert("⚠️ Preencha a contagem de estoque antes de calcular."); return; }
 
   let temSistema = false;
   if (modoEntrada === "pdf") {
@@ -841,13 +820,8 @@ function confirmarECalcular() {
     temSistema = Array.from(document.querySelectorAll("#lancamento-container .lancamento-item-input"))
       .some(el => (parseInt(el.value) || 0) > 0);
   }
+  if (!temSistema) { alert("⚠️ Preencha os dados do sistema (relatório) antes de calcular."); return; }
 
-  if (!temSistema) {
-    alert("⚠️ Preencha os dados do sistema (relatório) antes de calcular.");
-    return;
-  }
-
-  // Modal de confirmação
   document.getElementById("modal-confirmacao").classList.remove("hidden");
 }
 
@@ -870,21 +844,18 @@ function calcular() {
   if (modoEntrada === "pdf") {
     sistema = parseFloat(document.getElementById("inp-sistema-ocr").value) || 0;
     if (sistema === 0 && itensSistemaDetectados.length === 0) {
-      alert("Informe o total do sistema ou carregue um PDF/Foto.");
-      return;
+      alert("Informe o total do sistema ou carregue um PDF/Foto."); return;
     }
   } else {
     sistema = calcularTotalLancamento();
     if (sistema === 0 && itensSistemaDetectados.length === 0) {
-      alert("Lance pelo menos um item do relatório.");
-      return;
+      alert("Lance pelo menos um item do relatório."); return;
     }
   }
 
   const diff = sistema - manual;
   calculado = true;
 
-  // Bloquear inputs de estoque
   document.querySelectorAll("#manual-inputs input").forEach(el => el.disabled = true);
   document.querySelectorAll("#lancamento-container .lancamento-item-input").forEach(el => el.disabled = true);
 
@@ -910,9 +881,7 @@ function calcular() {
   document.getElementById("res-detalhe").innerText =
     `Manual (estoque): ${manual} eq. | Sistema (vendas): ${sistema} eq.`;
 
-  // Exibir campo de justificativa se houver diferença
-  const diffAbsoluta = Math.abs(diff);
-  if (diffAbsoluta > 0) {
+  if (Math.abs(diff) > 0) {
     document.getElementById("just-wrapper").classList.remove("hidden");
   } else {
     document.getElementById("just-wrapper").classList.add("hidden");
@@ -920,29 +889,21 @@ function calcular() {
 
   document.getElementById("result-area").scrollIntoView({ behavior:"smooth" });
 
-  // ── ENVIO AUTOMÁTICO (acontece junto com o cálculo, invisível ao funcionário) ──
   const manual2 = parseFloat(document.getElementById("manual-total").textContent) || 0;
-  let sistema2 = 0;
-  if (modoEntrada === "pdf") {
-    sistema2 = parseFloat(document.getElementById("inp-sistema-ocr").value) || 0;
-  } else {
-    sistema2 = parseFloat(document.getElementById("lancamento-total-display").textContent) || 0;
-  }
-  const diffNum = sistema2 - manual2;
-  const diffLabel2 = String(diffNum); // sem "+" para evitar erro no Google Sheets
+  let sistema2 = modoEntrada === "pdf"
+    ? parseFloat(document.getElementById("inp-sistema-ocr").value) || 0
+    : parseFloat(document.getElementById("lancamento-total-display").textContent) || 0;
 
-  // Captura detalhe do estoque manual
+  const diffNum = sistema2 - manual2;
   const calc = i => dadosManual[i].q30 + dadosManual[i].q15 * 0.5;
   const estoqueDetalhe = [
-    { cat: "A) Abertura",           q30: dadosManual.abertura.q30,    q15: dadosManual.abertura.q15,    eq: calc("abertura"),    sinal: "+" },
-    { cat: "B) Assados/Produzidos", q30: dadosManual.assados.q30,     q15: dadosManual.assados.q15,     eq: calc("assados"),     sinal: "+" },
-    { cat: "C) Desperdícios",       q30: dadosManual.desperdicio.q30, q15: dadosManual.desperdicio.q15, eq: calc("desperdicio"), sinal: "-" },
-    { cat: "D) Cortesias",          q30: dadosManual.cortesia.q30,    q15: dadosManual.cortesia.q15,    eq: calc("cortesia"),    sinal: "-" },
-    { cat: "E) Sobra Final",        q30: dadosManual.sobra.q30,       q15: dadosManual.sobra.q15,       eq: calc("sobra"),       sinal: "-" },
+    { cat:"A) Abertura",           q30:dadosManual.abertura.q30,    q15:dadosManual.abertura.q15,    eq:calc("abertura"),    sinal:"+" },
+    { cat:"B) Assados/Produzidos", q30:dadosManual.assados.q30,     q15:dadosManual.assados.q15,     eq:calc("assados"),     sinal:"+" },
+    { cat:"C) Desperdícios",       q30:dadosManual.desperdicio.q30, q15:dadosManual.desperdicio.q15, eq:calc("desperdicio"), sinal:"-" },
+    { cat:"D) Cortesias",          q30:dadosManual.cortesia.q30,    q15:dadosManual.cortesia.q15,    eq:calc("cortesia"),    sinal:"-" },
+    { cat:"E) Sobra Final",        q30:dadosManual.sobra.q30,       q15:dadosManual.sobra.q15,       eq:calc("sobra"),       sinal:"-" },
   ];
-  const estoqueStr = estoqueDetalhe
-    .map(e => `${e.cat}:${e.q30}x30+${e.q15}x15=${e.eq}eq`)
-    .join(" | ");
+  const estoqueStr = estoqueDetalhe.map(e => `${e.cat}:${e.q30}x30+${e.q15}x15=${e.eq}eq`).join(" | ");
 
   registroAtual = {
     id: Date.now(),
@@ -953,7 +914,7 @@ function calcular() {
     resp: document.getElementById("inp-resp").value || "—",
     manual: manual2,
     sistema: sistema2,
-    diff: diffLabel2,
+    diff: String(diffNum),
     just: "",
     modoEntrada,
     itens: itensSistemaDetectados,
@@ -962,18 +923,15 @@ function calcular() {
     enviado: false,
   };
 
-  // Salva localmente imediatamente (antes de qualquer coisa)
   salvarLocal(registroAtual);
-  // Tenta enviar para o Google Sheets
   enviarParaSheets(registroAtual);
 }
 
 // ================================================================
-// SALVAR LOCAL (localStorage — backup offline)
+// SALVAR LOCAL
 // ================================================================
 function salvarLocal(registro) {
   const db = JSON.parse(localStorage.getItem("roys_full_db")||"[]");
-  // Atualiza se já existe (para quando adicionar justificativa depois)
   const idx = db.findIndex(r => r.id === registro.id);
   if (idx >= 0) db[idx] = registro;
   else db.unshift(registro);
@@ -991,26 +949,25 @@ async function enviarParaSheets(registro) {
                      Math.abs(parseFloat(registro.diff)||0) <= 0.5  ? "ATENCAO" : "CRITICO";
 
   const params = new URLSearchParams({
-    timestamp:      registro.timestamp,
-    data:           registro.data,
-    turno:          registro.turno,
-    unidade:        registro.unidade,
-    responsavel:    registro.resp,
-    estoque_manual: registro.manual,
-    sistema:        registro.sistema,
-    diferenca:      registro.diff,
-    justificativa:  registro.just || "",
-    modo:           registro.modoEntrada === "manual" ? "Lancamento Manual" : "PDF/Foto",
-    itens:          itensStr,
-    status:         statusCalc,
+    timestamp:       registro.timestamp,
+    data:            registro.data,
+    turno:           registro.turno,
+    unidade:         registro.unidade,
+    responsavel:     registro.resp,
+    estoque_manual:  registro.manual,
+    sistema:         registro.sistema,
+    diferenca:       registro.diff,
+    justificativa:   registro.just || "",
+    modo:            registro.modoEntrada === "manual" ? "Lancamento Manual" : "PDF/Foto",
+    itens:           itensStr,
+    status:          statusCalc,
     estoque_detalhe: registro.estoqueStr || "",
   });
 
   const url = SHEETS_URL + "?" + params.toString();
 
-  // Técnica 1: fetch simples
   try {
-    await fetch(url, { method: "GET", mode: "no-cors" });
+    await fetch(url, { method:"GET", mode:"no-cors" });
     registro.enviado = true;
     salvarLocal(registro);
     return;
@@ -1018,13 +975,12 @@ async function enviarParaSheets(registro) {
     console.warn("fetch falhou, tentando img ping...", e);
   }
 
-  // Técnica 2: img ping (fallback — funciona mesmo com CORS bloqueado)
   try {
     await new Promise((resolve) => {
       const img = new Image();
       img.onload = img.onerror = resolve;
       img.src = url;
-      setTimeout(resolve, 5000); // timeout 5s
+      setTimeout(resolve, 5000);
     });
     registro.enviado = true;
     salvarLocal(registro);
@@ -1034,7 +990,7 @@ async function enviarParaSheets(registro) {
 }
 
 // ================================================================
-// SALVAR JUSTIFICATIVA (após digitar a justificativa)
+// SALVAR JUSTIFICATIVA
 // ================================================================
 function salvar() {
   const diff = document.getElementById("res-diff").innerText;
@@ -1047,11 +1003,10 @@ function salvar() {
     return;
   }
 
-  // Atualiza o registro com a justificativa e reenvia
   if (registroAtual) {
     registroAtual.just = just;
     salvarLocal(registroAtual);
-    enviarParaSheets(registroAtual); // reenvia com justificativa preenchida
+    enviarParaSheets(registroAtual);
   }
 
   alert("✅ Fechamento finalizado!");
@@ -1148,8 +1103,9 @@ function exportarPDF() {
   doc.setFontSize(12);
   doc.text(`Estoque Manual: ${fechamentoAtual.manual} eq.`, 10, y); y+=7;
   doc.text(`Sistema (Vendas): ${fechamentoAtual.sistema} eq.`, 10, y); y+=7;
+  const isOk = fechamentoAtual.diff==="0"||fechamentoAtual.diff==="+0";
   doc.setFontSize(14);
-  doc.setTextColor(fechamentoAtual.diff==="0"||fechamentoAtual.diff==="+0" ? 39 : 227, fechamentoAtual.diff==="0"||fechamentoAtual.diff==="+0" ? 128 : 6, fechamentoAtual.diff==="0"||fechamentoAtual.diff==="+0" ? 60 : 19);
+  doc.setTextColor(isOk ? 39 : 227, isOk ? 128 : 6, isOk ? 60 : 19);
   doc.text(`Diferença: ${fechamentoAtual.diff}`, 10, y); y+=10;
 
   if (fechamentoAtual.just) {
@@ -1180,24 +1136,20 @@ function resetarForm() {
   modoEntrada = "pdf";
   itensSistemaDetectados = [];
 
-  // tabs
   document.getElementById("tab-pdf").classList.add("active");
   document.getElementById("tab-manual").classList.remove("active");
   document.getElementById("painel-pdf").classList.remove("hidden");
   document.getElementById("painel-manual").classList.add("hidden");
 
-  // OCR
   document.getElementById("inp-sistema-ocr").value = "";
   document.getElementById("lista-itens-ocr").innerHTML = "";
   document.getElementById("ocr-result").classList.add("hidden");
 
-  // Resultado
   document.getElementById("result-area").classList.add("hidden");
   document.getElementById("just-wrapper").classList.add("hidden");
   document.getElementById("inp-just").value = "";
   document.getElementById("lancamento-total-display").textContent = "0";
 
-  // Recriar inputs
   gerarInputsManual();
   gerarLancamentoManual();
 
