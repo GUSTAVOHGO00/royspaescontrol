@@ -1,6 +1,6 @@
 # Roy's Controle de Pães V2 - Catálogo operacional e estabilidade
 
-Data: 30 de julho de 2026  
+Data: 30 de julho de 2026
 Status: aprovado pelo responsável da Roy's
 
 ## Objetivo
