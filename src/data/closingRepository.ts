@@ -3,6 +3,16 @@ import type { ClosingCounts, ClosingDraft, StoredClosing } from "./models";
 
 export type { ClosingDraft, StoredClosing } from "./models";
 
+export class DuplicateClosingError extends Error {
+  readonly existingId: string;
+
+  constructor(existingId: string) {
+    super("Já existe um fechamento definitivo para esta data, unidade e turno.");
+    this.name = "DuplicateClosingError";
+    this.existingId = existingId;
+  }
+}
+
 function emptyCounts(): ClosingCounts {
   return {
     opening: { q30: 0, q15: 0 },
@@ -47,6 +57,19 @@ class ClosingDatabase extends Dexie {
               "Registro migrado da primeira iteração V2; os detalhes que não existiam originalmente não puderam ser reconstruídos.";
           });
       });
+    this.version(4)
+      .stores({
+        closings: "id, createdAt, date, unit, status",
+        drafts: "id, updatedAt"
+      })
+      .upgrade(async (transaction) => {
+        await transaction
+          .table<StoredClosing>("closings")
+          .toCollection()
+          .modify((record) => {
+            record.createdByRole ??= "employee";
+          });
+      });
   }
 }
 
@@ -74,6 +97,18 @@ export function createClosingRepository(name = "roys-paes-v2") {
         [database.closings, database.drafts],
         async () => {
           const existing = await database.closings.get(record.id);
+          if (!existing && !record.correctsId) {
+            const duplicate = await database.closings
+              .filter(
+                (candidate) =>
+                  !candidate.correctsId &&
+                  candidate.date === record.date &&
+                  candidate.unit === record.unit &&
+                  candidate.shift === record.shift,
+              )
+              .first();
+            if (duplicate) throw new DuplicateClosingError(duplicate.id);
+          }
           if (!existing) await database.closings.add(record);
           await database.drafts.delete("active");
           return existing ? "existing" : "created";

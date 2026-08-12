@@ -1,5 +1,5 @@
 import type { TextContent } from "pdfjs-dist/types/src/display/api";
-import type { ParsedReportItem } from "./reportParser";
+import { parseReport, type ParsedReportItem } from "./reportParser";
 
 export type DocumentKind = "pdf" | "image" | "unsupported";
 export type ExtractionSource = "pdf-text" | "pdf-ocr" | "pdf-mixed" | "image-ocr";
@@ -37,8 +37,13 @@ export function validateDocumentFile(file: File): void {
   }
 }
 
-export function shouldOcrPdfPage(pageText: string): boolean {
-  return pageText.replace(/\s+/g, " ").trim().length < 30;
+export function shouldOcrPdfPage(
+  pageText: string,
+  recognizedItemCount?: number,
+): boolean {
+  const normalizedLength = pageText.replace(/\s+/g, " ").trim().length;
+  if (normalizedLength < 30) return true;
+  return recognizedItemCount !== undefined && recognizedItemCount === 0;
 }
 
 export function isTrustworthyExtraction(
@@ -158,7 +163,7 @@ async function extractPdf(
       const content = await page.getTextContent();
       const pageText = pageTextFromContent(content);
 
-      if (!shouldOcrPdfPage(pageText)) {
+      if (!shouldOcrPdfPage(pageText, parseReport(pageText).items.length)) {
         pages.push(pageText);
         textPages += 1;
         continue;

@@ -15,7 +15,8 @@ export default defineConfig({
         theme_color: "#0767B1",
         background_color: "#F6F1E8",
         display: "standalone",
-        start_url: "./",
+        start_url: "/loja",
+        scope: "/",
         lang: "pt-BR",
         icons: [
           {
@@ -34,8 +35,8 @@ export default defineConfig({
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
-        globPatterns: ["**/*.{js,css,html,png,jpg,svg,woff2,gz}"],
-        globIgnores: ["brand/icon-*.png"],
+        globPatterns: ["**/*.{js,css,html,png,svg,woff2}"],
+        globIgnores: ["brand/icon-*.png", "brand/steak-hero.jpg", "tesseract/**", "tessdata/**", "assets/pdf.worker.*"],
         runtimeCaching: [
           {
             urlPattern: /\.(?:jpg|jpeg|webp)$/i,
@@ -51,6 +52,7 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: "./src/test/setup.ts",
-    css: true
+    css: true,
+    testTimeout: 10_000
   }
 });

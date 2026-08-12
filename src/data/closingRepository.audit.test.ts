@@ -18,6 +18,7 @@ const closing: StoredClosing = {
   id: "closing-fixed",
   revision: 1,
   catalogVersion: "V5",
+  createdByRole: "employee",
   date: "2026-07-30",
   shift: "Noite",
   unit: "Shopping da Ilha",

@@ -52,6 +52,7 @@ export interface StoredClosing {
   shift: string;
   unit: string;
   responsible: string;
+  createdByRole: "employee" | "admin";
   counts: ClosingCounts;
   report: Record<string, number>;
   reportMode: "file" | "manual";

@@ -76,6 +76,7 @@ describe("App", () => {
     const finalizeButton = screen.getByRole("button", { name: /finalizar fechamento/i });
     fireEvent.click(finalizeButton);
     fireEvent.click(finalizeButton);
+    fireEvent.click(screen.getByRole("button", { name: /sim, finalizar definitivamente/i }));
 
     expect(
       await screen.findByRole("button", { name: /voltar ao início/i })

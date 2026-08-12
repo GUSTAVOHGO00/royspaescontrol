@@ -1,0 +1,124 @@
+.blind-review-card {
+  overflow: hidden;
+  border: 1px solid #d9d2c7;
+  border-radius: 20px;
+  background: #fffdfa;
+  box-shadow: 0 16px 40px rgba(17, 24, 33, 0.07);
+}
+
+.blind-review-message {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 15px;
+  align-items: center;
+  padding: 22px;
+  border-top: 6px solid #0d71b9;
+}
+
+.blind-review-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border-radius: 14px;
+  background: #e1f2fc;
+  color: #0968a4;
+}
+
+.blind-review-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.blind-review-message strong,
+.blind-review-message span {
+  display: block;
+}
+
+.blind-review-message strong {
+  color: #111b24;
+  font-size: 17px;
+}
+
+.blind-review-message span {
+  margin-top: 5px;
+  color: #64717b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.blind-review-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid #e9e2d8;
+}
+
+.blind-review-summary p {
+  margin: 0;
+  padding: 16px 20px;
+}
+
+.blind-review-summary p:nth-child(even) {
+  border-left: 1px solid #e9e2d8;
+}
+
+.blind-review-summary p:nth-child(n + 3) {
+  border-top: 1px solid #e9e2d8;
+}
+
+.blind-review-summary span,
+.blind-review-summary b {
+  display: block;
+}
+
+.blind-review-summary span {
+  color: #7b858d;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.blind-review-summary b {
+  margin-top: 5px;
+  color: #17222b;
+  font-size: 13px;
+}
+
+.blind-review-privacy {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 16px;
+  border-radius: 12px;
+  padding: 13px 14px;
+  background: #f2eee7;
+  color: #4d5a64;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.45;
+}
+
+.blind-review-privacy svg {
+  flex: 0 0 auto;
+  width: 18px;
+  color: #16845d;
+}
+
+.review-page .justification.optional {
+  margin-top: 18px;
+}
+
+@media (max-width: 520px) {
+  .blind-review-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .blind-review-summary p:nth-child(even) {
+    border-left: 0;
+  }
+
+  .blind-review-summary p + p {
+    border-top: 1px solid #e9e2d8;
+  }
+}

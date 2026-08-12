@@ -1,0 +1,17 @@
+import { FormEvent, useMemo, useState } from "react";
+import { X } from "lucide-react";
+import type { CountKey, ClosingCounts, StoredClosing } from "../../data/models";
+import { OPERATIONAL_REPORT_ITEMS } from "../../domain/operationalCatalog";
+
+const countLabels: Record<CountKey, string> = { opening: "Abertura", produced: "Assados", waste: "Desperdícios", courtesy: "Cortesias", leftover: "Sobra final" };
+
+export function AdminCorrection({ record, onCancel, onSave }: { record: StoredClosing; onCancel: () => void; onSave: (payload: { counts: ClosingCounts; report: Record<string, number>; explanation: string }) => Promise<void> }) {
+  const [counts, setCounts] = useState<ClosingCounts>(() => structuredClone(record.counts));
+  const [report, setReport] = useState<Record<string, number>>(() => ({ ...record.report }));
+  const [explanation, setExplanation] = useState("");
+  const [busy, setBusy] = useState(false); const [error, setError] = useState("");
+  const reportItems = useMemo(() => OPERATIONAL_REPORT_ITEMS, []);
+  function updateCount(key: CountKey, size: "q30" | "q15", value: string) { setCounts((current) => ({ ...current, [key]: { ...current[key], [size]: Math.max(0, Number(value) || 0) } })); }
+  async function submit(event: FormEvent) { event.preventDefault(); setBusy(true); setError(""); try { await onSave({ counts, report, explanation }); } catch (cause) { setError(cause instanceof Error ? cause.message : "Não foi possível salvar a correção."); setBusy(false); } }
+  return <div className="admin-correction-overlay" role="dialog" aria-modal="true" aria-labelledby="correction-title"><form className="admin-correction-modal" onSubmit={submit}><header><div><span>Revisão administrativa</span><h2 id="correction-title">Corrigir fechamento</h2><p>{record.unit} · {record.date} · {record.shift}</p></div><button type="button" onClick={onCancel} aria-label="Fechar"><X/></button></header><p className="correction-warning">O original permanecerá intacto. Esta ação cria uma nova revisão auditável.</p><h3>Controle físico</h3><div className="correction-counts">{(Object.keys(countLabels) as CountKey[]).map((key) => <fieldset key={key}><legend>{countLabels[key]}</legend><label>30 cm<input type="number" min="0" step="1" value={counts[key].q30} onChange={(event) => updateCount(key, "q30", event.target.value)}/></label><label>15 cm<input type="number" min="0" step="1" value={counts[key].q15} onChange={(event) => updateCount(key, "q15", event.target.value)}/></label></fieldset>)}</div><h3>Venda registrada no sistema</h3><div className="correction-report">{reportItems.map((item) => <label key={item.id}><span>{item.label}<small>{item.section === "essential" ? "Roy's Essencial" : item.section === "offers" ? "Ofertas" : "Cardápio"}</small></span><input type="number" min="0" step="1" value={report[item.id] ?? 0} onChange={(event) => setReport((current) => ({ ...current, [item.id]: Math.max(0, Number(event.target.value) || 0) }))}/></label>)}</div><label className="correction-reason">Motivo obrigatório da correção<textarea required minLength={10} value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="Explique claramente por que o registro está sendo corrigido."/></label>{error && <p role="alert" className="correction-error">{error}</p>}<footer><button type="button" onClick={onCancel}>Cancelar</button><button disabled={busy}>{busy ? "Salvando…" : "Criar nova revisão"}</button></footer></form></div>;
+}

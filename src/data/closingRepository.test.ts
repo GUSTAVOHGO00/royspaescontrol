@@ -17,6 +17,7 @@ function record(id: string, createdAt: string): StoredClosing {
     id,
     revision: 1,
     catalogVersion: "V5",
+  createdByRole: "employee",
     date: "2026-07-30",
     shift: "Noite",
     unit: "Shopping da Ilha",

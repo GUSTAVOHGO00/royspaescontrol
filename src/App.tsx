@@ -4,18 +4,20 @@ import {
   Camera,
   Check,
   ClipboardCheck,
-  Download,
+
   FileText,
   History,
   PackageCheck,
   RefreshCw,
   ShieldCheck,
-  Sparkles,
-  TriangleAlert,
+
   Upload
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { closingRepository } from "./data/closingRepository";
+import {
+  DuplicateClosingError,
+  closingRepository,
+} from "./data/closingRepository";
 import type {
   BreadCount,
   ClosingCounts,
@@ -26,6 +28,20 @@ import type {
   StoredDocument
 } from "./data/models";
 import { calculatePhysicalMovement, reconcileClosing } from "./domain/closing";
+import {
+  OPERATIONAL_REPORT_GROUPS,
+  OPERATIONAL_REPORT_ITEMS,
+  calculateReportEquivalent,
+  findOperationalItem,
+  normalizeOperationalReport,
+} from "./domain/operationalCatalog";
+import { AdminAccess } from "./features/admin/AdminAccess";
+import { AdminDashboard } from "./features/admin/AdminDashboard";
+import {
+  endAdminSession,
+  getAdminSession,
+} from "./features/admin/adminAuth";
+import { FinalConfirmation } from "./features/closing/FinalConfirmation";
 import { canReviewReport } from "./features/closing/reportReadiness";
 import {
   extractDocument,
@@ -37,10 +53,23 @@ import {
   type ParsedReportItem,
   type ReportCategory
 } from "./import/reportParser";
+import "./styles/adminEntry.css";
+import "./styles/blindReview.css";
+import "./styles/blindReviewInputs.css";
+import "./styles/employeePrivacy.css";
 import "./styles/global.css";
 import "./styles/ocr.css";
+import "./styles/reportCatalog.css";
+import type { Employee, Unit } from "./data/unitRepository";
+import { EmployeePicker } from "./features/store/EmployeePicker";
+import { ClosingResult } from "./features/store/ClosingResult";
+import { cloudClosingRepository, type ClosingReceipt } from "./data/cloudClosingRepository";
 
-type Step = "home" | ClosingStep | "done";
+type Step = "home" | ClosingStep | "done" | "admin-access" | "admin-dashboard";
+
+function isClosingStep(value: Step): value is ClosingStep {
+  return value === "identity" || value === "physical" || value === "report" || value === "review";
+}
 
 const INITIAL_COUNTS: ClosingCounts = {
   opening: { q30: 0, q15: 0 },
@@ -58,20 +87,12 @@ const COUNT_LABELS: Record<CountKey, { eyebrow: string; title: string; tone: str
   leftover: { eyebrow: "E", title: "Sobra final", tone: "ink" }
 };
 
-const REPORT_FIELDS = [
-  { id: "smart", label: "Subs Smart", factor: 0.5 },
-  { id: "super", label: "Subs Super", factor: 1 },
-  { id: "comboSmart", label: "Combos Smart", factor: 0.5 },
-  { id: "comboSuper", label: "Combos Super", factor: 1 },
-  { id: "integrator", label: "Integrador padrão (confirmar)", factor: 0.5 }
-] as const;
-
-const CATEGORY_OPTIONS: { value: ReportCategory; label: string; factor: number }[] = [
-  { value: "smart", label: "Smart", factor: 0.5 },
-  { value: "super", label: "Super", factor: 1 },
-  { value: "combo-smart", label: "Combo Smart", factor: 0.5 },
-  { value: "combo-super", label: "Combo Super", factor: 1 }
-];
+const CATEGORY_OPTIONS: { value: ReportCategory; label: string; factor: number }[] =
+  OPERATIONAL_REPORT_ITEMS.map((item) => ({
+    value: item.id,
+    label: `${item.label} · ${item.breadFactor.toLocaleString("pt-BR")} pão`,
+    factor: item.breadFactor,
+  }));
 
 function equivalent(value: BreadCount) {
   return value.q30 + value.q15 * 0.5;
@@ -99,13 +120,7 @@ function defaultShift() {
 
 function reportTotals(items: ParsedReportItem[]): Record<string, number> {
   return items.reduce<Record<string, number>>((result, item) => {
-    const key =
-      item.category === "combo-smart"
-        ? "comboSmart"
-        : item.category === "combo-super"
-          ? "comboSuper"
-          : item.category;
-    result[key] = (result[key] ?? 0) + item.quantity;
+    result[item.category] = (result[item.category] ?? 0) + item.quantity;
     return result;
   }, {});
 }
@@ -115,24 +130,20 @@ function safeNonNegative(value: string, fallback = 0) {
   return Number.isFinite(parsed) ? Math.max(0, parsed) : fallback;
 }
 
-function csvCell(value: unknown) {
-  const raw = String(value ?? "");
-  const formulaSafe =
-    typeof value === "string" && /^[=+\-@]/.test(raw) ? `'${raw}` : raw;
-  return `"${formulaSafe.replaceAll('"', '""')}"`;
-}
 
-export function App() {
+export function App({ storeUnit, onStoreSignOut }: { storeUnit?: Unit; onStoreSignOut?: () => void } = {}) {
   const [step, setStep] = useState<Step>("home");
   const [draftStep, setDraftStep] = useState<ClosingStep>("identity");
   const [history, setHistory] = useState<StoredClosing[]>([]);
   const [historyQuery, setHistoryQuery] = useState("");
-  const [historyStatus, setHistoryStatus] = useState<"all" | StoredClosing["status"]>("all");
+
   const [closingId, setClosingId] = useState<string>(() => crypto.randomUUID());
   const [revision, setRevision] = useState(1);
   const [correctsId, setCorrectsId] = useState<string>();
   const [responsible, setResponsible] = useState("");
-  const [unit, setUnit] = useState("Shopping da Ilha");
+  const [employeeId, setEmployeeId] = useState("");
+  const [unit, setUnit] = useState(storeUnit?.name ?? "Shopping da Ilha");
+  const [cloudReceipt, setCloudReceipt] = useState<ClosingReceipt>();
   const [shift, setShift] = useState(defaultShift);
   const [date, setDate] = useState(todayInSaoPaulo);
   const [counts, setCounts] = useState<ClosingCounts>(INITIAL_COUNTS);
@@ -151,6 +162,8 @@ export function App() {
   const [storageError, setStorageError] = useState("");
   const [autoSaveState, setAutoSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [saving, setSaving] = useState(false);
+  const [showFinalConfirmation, setShowFinalConfirmation] = useState(false);
+  const [resumeAdminDraftAfterAuth, setResumeAdminDraftAfterAuth] = useState(false);
   const savingLock = useRef(false);
   const uploadSequence = useRef(0);
   const [saveError, setSaveError] = useState("");
@@ -171,7 +184,7 @@ export function App() {
           setShift(draft.shift);
           setDate(draft.date);
           setCounts(draft.counts);
-          setReport(draft.report);
+          setReport(normalizeOperationalReport(draft.report));
           setReportMode(draft.reportMode);
           setDocumentName(draft.documentName);
           setSourceDocument(draft.document);
@@ -195,7 +208,8 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (!storageReady || step === "home" || step === "done") return;
+    if (!storageReady || !isClosingStep(step)) return;
+    const currentClosingStep = step;
     setAutoSaveState("saving");
     const timer = window.setTimeout(() => {
       const draft: ClosingDraft = {
@@ -222,7 +236,7 @@ export function App() {
         .saveDraft(draft)
         .then(() => {
           setHasDraft(true);
-          setDraftStep(step);
+          setDraftStep(currentClosingStep);
           setAutoSaveState("saved");
           setStorageError("");
         })
@@ -252,6 +266,17 @@ export function App() {
     unit
   ]);
 
+  useEffect(() => {
+    const isProtectedCorrection =
+      Boolean(correctsId) && isClosingStep(step);
+    if (step !== "admin-dashboard" && !isProtectedCorrection) return;
+    const timer = window.setInterval(() => {
+      if (getAdminSession()) return;
+      if (isProtectedCorrection) setResumeAdminDraftAfterAuth(true);
+      setStep("admin-access");
+    }, 5_000);
+    return () => window.clearInterval(timer);
+  }, [correctsId, step]);
   const physical = useMemo(
     () =>
       calculatePhysicalMovement({
@@ -264,14 +289,7 @@ export function App() {
     [counts]
   );
 
-  const system = useMemo(
-    () =>
-      REPORT_FIELDS.reduce(
-        (total, field) => total + (report[field.id] ?? 0) * field.factor,
-        0
-      ),
-    [report]
-  );
+  const system = useMemo(() => calculateReportEquivalent(report), [report]);
 
   const difference = system - physical;
   const physicalIsValid = physical >= 0;
@@ -321,6 +339,11 @@ export function App() {
   }
 
   async function startClosing() {
+    if (hasDraft && correctsId && !getAdminSession()) {
+      setResumeAdminDraftAfterAuth(true);
+      setStep("admin-access");
+      return;
+    }
     if (
       hasDraft &&
       !window.confirm("Começar um novo fechamento apagará o rascunho atual. Deseja continuar?")
@@ -336,10 +359,19 @@ export function App() {
   }
 
   function resumeClosing() {
+    if (correctsId && !getAdminSession()) {
+      setResumeAdminDraftAfterAuth(true);
+      setStep("admin-access");
+      return;
+    }
     setStep(draftStep);
   }
 
   async function startCorrection(item: StoredClosing) {
+    if (!getAdminSession()) {
+      setStep("admin-access");
+      return;
+    }
     if (
       hasDraft &&
       !window.confirm("Criar a correção apagará o rascunho atual. Deseja continuar?")
@@ -354,7 +386,7 @@ export function App() {
       setShift(item.shift);
       setDate(item.date);
       setCounts(item.counts);
-      setReport(item.report);
+      setReport(normalizeOperationalReport(item.report));
       setReportMode(item.reportMode);
       setDocumentName(item.document?.name ?? "");
       setSourceDocument(item.document);
@@ -370,6 +402,10 @@ export function App() {
   }
 
   function goBack() {
+    if (step === "identity" && correctsId && getAdminSession()) {
+      setStep("admin-dashboard");
+      return;
+    }
     const previous: Record<ClosingStep, Step> = {
       identity: "home",
       physical: "identity",
@@ -377,7 +413,7 @@ export function App() {
       review: "report"
     };
     if (step === "done") setStep("home");
-    else if (step !== "home") setStep(previous[step]);
+    else if (isClosingStep(step)) setStep(previous[step]);
   }
 
   function updateCount(key: CountKey, size: keyof BreadCount, value: string) {
@@ -486,6 +522,13 @@ export function App() {
   }
   async function finalize() {
     if (savingLock.current) return;
+    if (correctsId && !getAdminSession()) {
+      setShowFinalConfirmation(false);
+      setSaveError("Sua sessão administrativa expirou. Entre novamente para finalizar esta correção.");
+      setResumeAdminDraftAfterAuth(true);
+      setStep("admin-access");
+      return;
+    }
     savingLock.current = true;
     setSaving(true);
     setSaveError("");
@@ -498,6 +541,7 @@ export function App() {
       shift,
       unit,
       responsible: responsible.trim(),
+      createdByRole: correctsId ? "admin" : "employee",
       counts,
       report,
       reportMode,
@@ -512,96 +556,95 @@ export function App() {
     };
 
     try {
+      if (storeUnit && !correctsId) {
+        let documentPath: string | undefined;
+        if (sourceDocument) {
+          const file = new File([sourceDocument.blob], sourceDocument.name, { type: sourceDocument.type });
+          documentPath = await cloudClosingRepository.uploadEvidence(storeUnit.id, closingId, file);
+        }
+        const receipt = await cloudClosingRepository.submitClosing({ idempotencyKey: closingId, employeeId, businessDate: date, shift, counts, report, reportMode, parsedItems, documentPath, documentMetadata: sourceDocument ? { name: sourceDocument.name, type: sourceDocument.type, size: sourceDocument.size, source: sourceDocument.source, warnings: sourceDocument.warnings } : undefined, clientLocalAt: new Date().toISOString() });
+        await closingRepository.clearDraft();
+        setCloudReceipt(receipt); setHasDraft(false); setShowFinalConfirmation(false); setStep("done"); return;
+      }
       await closingRepository.finalize(record);
       setHistory(await closingRepository.list());
       setHasDraft(false);
+      setShowFinalConfirmation(false);
       setStep("done");
-    } catch {
-      setSaveError("Não foi possível salvar. Seus dados continuam nesta tela; toque em tentar novamente.");
+    } catch (error) {
+      setSaveError(
+        error instanceof DuplicateClosingError
+          ? "Este fechamento já foi enviado. Somente o administrador pode criar uma correção."
+          : "Não foi possível salvar. Seus dados continuam nesta tela; toque em tentar novamente.",
+      );
     } finally {
       savingLock.current = false;
       setSaving(false);
     }
   }
 
-  function exportCsv() {
-    const header = [
-      "id",
-      "data",
-      "turno",
-      "unidade",
-      "responsavel",
-      "consumo_fisico",
-      "venda_sistema",
-      "diferenca",
-      "status",
-      "justificativa",
-      "catalogo"
-    ];
-    const rows = history.map((item) =>
-      [
-        item.id,
-        item.date,
-        item.shift,
-        item.unit,
-        item.responsible,
-        item.physical,
-        item.system,
-        item.difference,
-        item.status,
-        item.justification,
-        item.catalogVersion
-      ]
-        .map(csvCell)
-        .join(",")
+  function handleAdminAuthenticated() {
+    if (resumeAdminDraftAfterAuth && correctsId) {
+      setResumeAdminDraftAfterAuth(false);
+      setStep(draftStep);
+      return;
+    }
+    setStep("admin-dashboard");
+  }
+
+  function openAdmin() {
+    setResumeAdminDraftAfterAuth(false);
+    setStep(getAdminSession() ? "admin-dashboard" : "admin-access");
+  }
+
+  function logoutAdmin() {
+    endAdminSession();
+    setStep("home");
+  }
+  if (step === "admin-access") {
+    return (
+      <AdminAccess
+        onAuthenticated={handleAdminAuthenticated}
+        onBack={() => setStep("home")}
+      />
     );
-    const blob = new Blob([[header.join(","), ...rows].join("\n")], {
-      type: "text/csv;charset=utf-8"
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `roys-fechamentos-${todayInSaoPaulo()}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
   }
 
-  function downloadOriginal(item: StoredClosing) {
-    if (!item.document) return;
-    const url = URL.createObjectURL(item.document.blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = item.document.name;
-    link.click();
-    URL.revokeObjectURL(url);
+  if (step === "admin-dashboard") {
+    if (!getAdminSession()) {
+      return (
+        <AdminAccess
+          onAuthenticated={handleAdminAuthenticated}
+          onBack={() => setStep("home")}
+        />
+      );
+    }
+    return (
+      <AdminDashboard
+        records={history}
+        onBack={() => setStep("home")}
+        onCorrect={(record) => void startCorrection(record)}
+        onLogout={logoutAdmin}
+      />
+    );
   }
-
   if (step === "home") {
-    const balancedCount = history.filter((item) => item.status === "balanced").length;
-    const explainedCount = history.filter(
-      (item) => item.status !== "balanced" && item.justification
-    ).length;
-    const wasteTotal = history.reduce(
-      (total, item) => total + equivalent(item.counts?.waste ?? { q30: 0, q15: 0 }),
-      0
-    );
     const normalizedQuery = historyQuery.trim().toLocaleLowerCase("pt-BR");
-    const visibleHistory = history.filter((item) => {
-      const matchesStatus = historyStatus === "all" || item.status === historyStatus;
-      const matchesQuery =
-        !normalizedQuery ||
-        [item.responsible, item.unit, item.date, item.shift]
-          .join(" ")
-          .toLocaleLowerCase("pt-BR")
-          .includes(normalizedQuery);
-      return matchesStatus && matchesQuery;
-    });
-
+    const visibleHistory = history.filter((item) =>
+      !normalizedQuery ||
+      [item.responsible, item.unit, item.date, item.shift]
+        .join(" ")
+        .toLocaleLowerCase("pt-BR")
+        .includes(normalizedQuery)
+    );
     return (
       <main className="app-shell home-shell">
         <header className="brand-bar">
           <img src="brand/logo-primary-black.png" alt="Roy's Sandwich Shop" />
-          <span>Controle interno • V2</span>
+          <div className="brand-bar-actions">
+            <span>Controle interno · V2</span>
+            {onStoreSignOut ? <button className="admin-entry-button" onClick={onStoreSignOut} type="button">Sair da loja</button> : <button className="admin-entry-button" onClick={openAdmin} type="button"><ShieldCheck aria-hidden="true" />Área administrativa</button>}
+          </div>
         </header>
 
         {storageError && <div className="system-alert">{storageError}</div>}
@@ -610,7 +653,7 @@ export function App() {
           <div className="hero-copy">
             <div className="kicker"><span /> Fechamento simples, conferência segura</div>
             <h1 aria-label="Fechamento de Pães">Fechamento<br /><em>de Pães</em></h1>
-            <p>Conte, confira e finalize. O sistema mostra somente o que precisa da sua atenção.</p>
+            <p>Registre o fechamento do turno de forma rápida e segura.</p>
             {hasDraft ? (
               <div className="hero-actions">
                 <button className="primary-action" onClick={resumeClosing}>
@@ -630,25 +673,25 @@ export function App() {
           </div>
         </section>
 
-        <section className="today-strip" aria-label="Resumo real do aparelho">
-          <article><PackageCheck /><div><strong>{history.length}</strong><span>fechamentos concluídos</span></div></article>
-          <article><ShieldCheck /><div><strong>{balancedCount}</strong><span>sem diferença</span></div></article>
-          <article><Sparkles /><div><strong>{explainedCount}</strong><span>ocorrências explicadas</span></div></article>
-          <article><TriangleAlert /><div><strong>{wasteTotal}</strong><span>pães em desperdício</span></div></article>
+        <section className="today-strip employee-privacy-strip" aria-label="Informações do fechamento">
+          <article><PackageCheck /><div><strong>{history.length}</strong><span>envios realizados</span></div></article>
+          <article><ShieldCheck /><div><strong>Administração</strong><span>acesso com senha</span></div></article>
+          <article><ClipboardCheck /><div><strong>Após o envio</strong><span>registro definitivo</span></div></article>
+          <article><FileText /><div><strong>Foto, PDF</strong><span>ou preenchimento manual</span></div></article>
         </section>
 
-        <section className="recent">
+        <section className="recent employee-history">
           <div className="section-title">
-            <div><span>Histórico local auditável</span><h2>Últimos fechamentos</h2></div>
-            <div className="title-actions">
-              {history.length > 0 && <button className="icon-button" onClick={exportCsv} aria-label="Exportar CSV"><Download /></button>}
-              <History aria-hidden />
-            </div>
+            <div><span>Comprovantes de envio</span><h2>Envios recentes</h2></div>
+            <History aria-hidden />
+          </div>
+          <div className="employee-result-notice">
+            <ShieldCheck aria-hidden="true" />
+            <div><strong>Conferência protegida</strong><span>Diferenças, valores e análises ficam visíveis apenas na área administrativa.</span></div>
           </div>
           {history.length > 0 && (
             <div className="history-filters">
               <label>Buscar<input type="search" value={historyQuery} onChange={(event) => setHistoryQuery(event.target.value)} placeholder="Nome, unidade, data ou turno" /></label>
-              <label>Status<select value={historyStatus} onChange={(event) => setHistoryStatus(event.target.value as typeof historyStatus)}><option value="all">Todos</option><option value="balanced">Sem diferença</option><option value="attention">Atenção</option><option value="critical">Crítico</option></select></label>
             </div>
           )}
           {history.length === 0 ? (
@@ -658,42 +701,23 @@ export function App() {
               <p>O rascunho é salvo neste aparelho a cada etapa e pode ser retomado.</p>
             </div>
           ) : (
-            <div className="history-list">
+            <div className="employee-submission-list">
               {visibleHistory.map((item) => (
-                <details key={item.id} className="history-detail">
-                  <summary>
-                    <span className={`status-dot ${item.status}`} />
-                    <div><b>{item.unit}</b><small>{item.date} • {item.shift} • {item.responsible}</small></div>
-                    <strong>{item.difference > 0 ? "+" : ""}{item.difference}</strong>
-                  </summary>
-                  <div className="audit-grid">
-                    <p><span>Consumo físico</span><b>{item.physical}</b></p>
-                    <p><span>Venda sistema</span><b>{item.system}</b></p>
-                    <p><span>Catálogo</span><b>{item.catalogVersion}</b></p>
-                    <p><span>Revisão</span><b>#{item.revision}</b></p>
+                <article key={item.id} className="employee-submission-card">
+                  <span className="employee-submission-icon"><Check aria-hidden="true" /></span>
+                  <div>
+                    <b>{item.unit}</b>
+                    <small>{item.date} • {item.shift} • {item.responsible}</small>
                   </div>
-                  {item.migrationWarning && <p className="audit-note"><b>Aviso:</b> {item.migrationWarning}</p>}
-                  {item.correctsId && <p className="audit-note"><b>Corrige:</b> {item.correctsId}</p>}
-                  {item.justification && <p className="audit-note"><b>Explicação:</b> {item.justification}</p>}
-                  <div className="audit-actions">
-                    {item.document && (
-                      <button className="text-button" onClick={() => downloadOriginal(item)}>
-                        <Download /> Baixar original
-                      </button>
-                    )}
-                    <button className="text-button" onClick={() => void startCorrection(item)}>
-                      <RefreshCw /> Criar correção
-                    </button>
-                  </div>
-                </details>
+                  <strong className="employee-submission-state"><Check aria-hidden="true" /> Fechamento enviado</strong>
+                </article>
               ))}
             </div>
           )}
           {history.length > 0 && visibleHistory.length === 0 && (
-            <div className="empty-card"><h3>Nenhum fechamento encontrado</h3><p>Limpe a busca ou escolha outro status.</p></div>
+            <div className="empty-card"><h3>Nenhum envio encontrado</h3><p>Limpe a busca e tente novamente.</p></div>
           )}
-        </section>
-      </main>
+        </section>      </main>
     );
   }
 
@@ -715,17 +739,21 @@ export function App() {
       {step === "identity" && (
         <section className="flow-page">
           <div className="step-mark">01 • Preparar</div>
+          {correctsId && (
+            <div className="admin-correction-banner">
+              <ShieldCheck aria-hidden="true" />
+              <span>Correção administrativa · revisão #{revision}</span>
+            </div>
+          )}
           <h1 aria-label="Quem está fechando?">Quem está<br /><em>fechando?</em></h1>
           <p className="lead">Data e turno já vêm prontos. Confira e siga.</p>
           <div className="form-card">
-            <label>Responsável
-              <input autoFocus value={responsible} onChange={(event) => setResponsible(event.target.value)} placeholder="Digite seu nome" />
-            </label>
+            {storeUnit ? <EmployeePicker unit={storeUnit} selectedId={employeeId} onSelect={(employee: Employee) => { setEmployeeId(employee.id); setResponsible(employee.name); }} /> : <label>Responsável<input autoFocus value={responsible} onChange={(event) => setResponsible(event.target.value)} placeholder="Digite seu nome" /></label>}
             <div className="two-cols">
               <label>Data<input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
               <label>Turno<select value={shift} onChange={(event) => setShift(event.target.value)}><option>Manhã</option><option>Tarde</option><option>Noite</option></select></label>
             </div>
-            <label>Unidade<select value={unit} onChange={(event) => setUnit(event.target.value)}><option>Shopping da Ilha</option><option>Shopping Rio Anil</option></select></label>
+            {!storeUnit && <label>Unidade<select value={unit} onChange={(event) => setUnit(event.target.value)}><option>Shopping da Ilha</option><option>Shopping Rio Anil</option></select></label>}
           </div>
           <button className="primary-action sticky-action" disabled={!responsible.trim()} onClick={() => setStep("physical")}>
             Continuar <ArrowRight />
@@ -798,11 +826,45 @@ export function App() {
               <button className="text-button" onClick={useManualReport}>Prefiro digitar os totais</button>
             </div>
           ) : (
-            <div className="report-list">
-              {REPORT_FIELDS.map((field) => (
-                <label key={field.id}><div><b>{field.label}</b><small>{field.factor === 0.5 ? "½ pão por unidade" : "1 pão por unidade"}</small></div>
-                  <input type="number" min="0" inputMode="numeric" placeholder="0" value={report[field.id] || ""} onChange={(event) => setReport((current) => ({ ...current, [field.id]: safeNonNegative(event.target.value) }))} />
-                </label>
+            <div className="report-sections">
+              {OPERATIONAL_REPORT_GROUPS.map((group) => (
+                <section className={`report-group report-group-${group.id}`} key={group.id}>
+                  <div className="report-group-heading">
+                    <div>
+                      <span>{group.id === "regular" ? "01" : group.id === "essential" ? "02" : "03"}</span>
+                      <h2>{group.label}</h2>
+                    </div>
+                    <p>{group.description}</p>
+                  </div>
+                  <div className="report-list">
+                    {group.items.map((itemId) => {
+                      const field = findOperationalItem(itemId);
+                      if (!field) return null;
+                      return (
+                        <label key={field.id}>
+                          <div>
+                            <b>{field.label}</b>
+                            <small>{field.breadFactor.toLocaleString("pt-BR")} pão por unidade</small>
+                          </div>
+                          <input
+                            aria-label={`Quantidade de ${field.label}`}
+                            type="number"
+                            min="0"
+                            inputMode="numeric"
+                            placeholder="0"
+                            value={report[field.id] || ""}
+                            onChange={(event) =>
+                              setReport((current) => ({
+                                ...current,
+                                [field.id]: safeNonNegative(event.target.value),
+                              }))
+                            }
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
+                </section>
               ))}
             </div>
           )}
@@ -813,35 +875,77 @@ export function App() {
       {step === "review" && (
         <section className="flow-page review-page">
           <div className="step-mark">04 • Revisar</div>
-          <h1>Está tudo<br /><em>bem explicado</em></h1>
-          <div className={`result-panel ${status}`}>
-            <span>{status === "balanced" ? "Tudo certo" : status === "attention" ? "Vale conferir" : "Atenção necessária"}</span>
-            <strong>{difference > 0 ? "+" : ""}{difference}</strong>
-            <small>equivalente de pão (venda − consumo)</small>
-            <div><p><b>{physical}</b><span>consumo físico</span></p><p><b>{system}</b><span>venda no sistema</span></p></div>
+          <h1 aria-label="Revise o fechamento">Revise o<br /><em>fechamento</em></h1>
+          <div className="blind-review-card">
+            <div className="blind-review-message">
+              <div className="blind-review-icon"><ShieldCheck aria-hidden="true" /></div>
+              <div>
+                <strong>Conferência protegida</strong>
+                <span>Por integridade, o resultado não aparece antes do envio. Depois que o fechamento for gravado e bloqueado, você verá se faltaram pães, sobraram pães ou se ficou tudo correto.</span>
+              </div>
+            </div>
+            <div className="blind-review-summary">
+              <p><span>Responsável</span><b>{responsible}</b></p>
+              <p><span>Unidade</span><b>{unit}</b></p>
+              <p><span>Data e turno</span><b>{date} · {shift}</b></p>
+              <p><span>Relatório</span><b>{reportMode === "file" ? documentName : "Lançamento manual conferido"}</b></p>
+            </div>
+            <section className="blind-review-inputs" aria-label="Dados informados para conferência">
+              <div className="blind-review-input-heading">
+                <span>Contagem informada</span>
+                <strong>Confira os números digitados</strong>
+              </div>
+              <div className="blind-review-count-grid">
+                {(Object.keys(COUNT_LABELS) as CountKey[]).map((key) => (
+                  <article key={key}>
+                    <b>{COUNT_LABELS[key].title}</b>
+                    <span>30 cm: <strong>{counts[key].q30}</strong></span>
+                    <span>15 cm: <strong>{counts[key].q15}</strong></span>
+                  </article>
+                ))}
+              </div>
+              <div className="blind-review-input-heading report-heading">
+                <span>Relatório informado</span>
+                <strong>Quantidades por item</strong>
+              </div>
+              <div className="blind-review-report-list">
+                {OPERATIONAL_REPORT_ITEMS.filter((item) => (report[item.id] ?? 0) > 0).map((item) => (
+                  <p key={item.id}>
+                    <span>{item.label}</span>
+                    <strong>{report[item.id]}</strong>
+                  </p>
+                ))}
+              </div>
+            </section>
+            <div className="blind-review-privacy">
+              <ShieldCheck aria-hidden="true" />
+              <span>A funcionária confirma o que lançou, sem visualizar diferença, consumo calculado ou status.</span>
+            </div>
           </div>
-          {status !== "balanced" && (
-            <label className="justification">O que aconteceu?
-              <textarea value={justification} onChange={(event) => setJustification(event.target.value)} placeholder="Ex.: pão descartado por avaria ainda não lançado..." />
-              <small>Uma frase clara já resolve.</small>
-            </label>
-          )}
+          {!storeUnit && <label className="justification optional">O que aconteceu? (opcional)<textarea value={justification} onChange={(event) => setJustification(event.target.value)} placeholder="Registre somente uma ocorrência real observada durante a operação." /><small>Não é necessário preencher se não houve ocorrência observada.</small></label>}
           {saveError && <p className="ocr-warning">{saveError}</p>}
-          <button className="primary-action sticky-action" disabled={saving || (status !== "balanced" && justification.trim().length < 8)} onClick={() => void finalize()}>
+          <button className="primary-action sticky-action" disabled={saving} onClick={() => setShowFinalConfirmation(true)}>
             {saving ? "Salvando…" : saveError ? "Tentar novamente" : "Finalizar fechamento"} <Check />
           </button>
         </section>
       )}
 
-      {step === "done" && (
+      {step === "done" && cloudReceipt && <ClosingResult receipt={cloudReceipt} onJustify={(reasonCode, explanation) => cloudClosingRepository.justifyClosing({ closingId: cloudReceipt.closingId, reasonCode, explanation })} onNew={() => { resetForm(); setEmployeeId(""); setCloudReceipt(undefined); setStep("home"); }} />}
+      {step === "done" && !cloudReceipt && (
         <section className="flow-page done-page">
           <div className="done-burst"><span /><Check /></div>
           <div className="step-mark">05 • Pronto</div>
           <h1 aria-label="Fechamento concluído">Fechamento<br /><em>concluído!</em></h1>
           <p>Registro salvo com dados de auditoria e arquivo original. <b>Processo completo e rastreável.</b></p>
-          <button className="primary-action" onClick={() => setStep("home")}>Voltar ao início <ArrowRight /></button>
+          <button className="primary-action" onClick={() => setStep(correctsId && getAdminSession() ? "admin-dashboard" : "home")}>{correctsId ? "Voltar ao painel" : "Voltar ao início"} <ArrowRight /></button>
         </section>
       )}
+      <FinalConfirmation
+        open={showFinalConfirmation}
+        saving={saving}
+        onCancel={() => setShowFinalConfirmation(false)}
+        onConfirm={() => void finalize()}
+      />
     </main>
   );
 }
