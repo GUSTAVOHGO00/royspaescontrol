@@ -5,11 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "preview": "vite preview",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.112.3",
     "@tesseract.js-data/por": "^1.0.0",
     "dexie": "^4.4.4",
     "lucide-react": "^1.27.0",
