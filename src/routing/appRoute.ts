@@ -10,6 +10,6 @@ export function resolveAuthorizedRoute(
   requested: AppRoute,
   role: "admin" | "manager" | "store",
 ): AppRoute {
-  if (requested === "recovery") return requested;
+  if (requested === "recovery" || requested === "store") return requested;
   return role === "admin" ? "admin" : "store";
 }

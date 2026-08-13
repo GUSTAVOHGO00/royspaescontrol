@@ -11,8 +11,8 @@ describe("app route", () => {
     expect(resolveAppRoute(path)).toBe(expected);
   });
 
-  it("routes an authenticated administrator from the store URL to admin", () => {
-    expect(resolveAuthorizedRoute("store", "admin")).toBe("admin");
+  it("keeps the main store page visible for an authenticated administrator", () => {
+    expect(resolveAuthorizedRoute("store", "admin")).toBe("store");
   });
 
   it("routes an authenticated store account away from admin", () => {

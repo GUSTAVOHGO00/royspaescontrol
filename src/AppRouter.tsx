@@ -12,7 +12,7 @@ export function AppRouter(){const requestedRoute=resolveAppRoute(window.location
  const route=auth.session&&auth.profile?resolveAuthorizedRoute(requestedRoute,auth.profile.role):requestedRoute;
  if(route!==requestedRoute){window.history.replaceState(null,"",route==="admin"?"/admin":"/loja");}
  if(route==="recovery")return <PasswordRecovery/>;
- if(route==="store"){if(!auth.session)return <StoreLogin onLogin={async(u,p)=>{await authService.signInStore(u,p);await auth.refresh();rerender(x=>x+1)}}/>;if(auth.profile?.role!=="store"||!auth.unit)return <RoleMismatch onExit={auth.signOut}/>;return <App storeUnit={auth.unit} onStoreSignOut={()=>void auth.signOut()}/>;}
+ if(route==="store"){if(!auth.session||auth.profile?.role!=="store")return <StoreLogin onLogin={async(u,p)=>{await authService.signInStore(u,p);await auth.refresh();rerender(x=>x+1)}}/>;if(auth.profile?.role!=="store"||!auth.unit)return <RoleMismatch onExit={auth.signOut}/>;return <App storeUnit={auth.unit} onStoreSignOut={()=>void auth.signOut()}/>;}
  if(!auth.session)return <CloudAdminAccess onAuthenticated={async()=>{await auth.refresh();rerender(x=>x+1)}} onBack={()=>{window.location.href="/loja"}}/>;
  if(auth.profile?.role!=="admin")return <RoleMismatch onExit={auth.signOut}/>;
  return <AdminPortal onBack={()=>{window.location.href="/loja"}} onLogout={()=>void auth.signOut()}/>;
