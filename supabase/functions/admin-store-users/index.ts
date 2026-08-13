@@ -18,7 +18,7 @@ function normalizeUsername(value: unknown) {
 
 function requirePassword(value: unknown) {
   const password = String(value ?? "");
-  if (password.length < 10) throw new Error("A senha precisa ter pelo menos 10 caracteres.");
+  if (password.length < 4) throw new Error("A senha precisa ter pelo menos 4 caracteres.");
   return password;
 }
 

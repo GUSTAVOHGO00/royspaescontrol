@@ -27,6 +27,13 @@ describe("unit repository", () => {
     await expect(repository.createStoreAccess({ unitId: "unit-rio", username: "rio-anil", password: "SenhaSegura123" }))
       .rejects.toThrow("Login já utilizado.");
   });
+  it("rejects a store password shorter than four characters", async () => {
+    const invoke = vi.fn();
+    const repository = createUnitRepository({ functions: { invoke } } as never);
+    await expect(repository.createStoreAccess({ unitId: "unit-rio", username: "rio-anil", password: "123" }))
+      .rejects.toThrow("A senha precisa ter pelo menos 4 caracteres.");
+    expect(invoke).not.toHaveBeenCalled();
+  });
   it("invokes protected credential deletion", async () => {
     const invoke = vi.fn().mockResolvedValue({ data: { deleted: true }, error: null });
     const repository = createUnitRepository({ functions: { invoke } } as never);

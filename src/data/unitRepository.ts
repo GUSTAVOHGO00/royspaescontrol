@@ -22,6 +22,10 @@ export function normalizeStoreUsername(value: string) {
     .slice(0, 32);
 }
 
+function requireStorePassword(value: string) {
+  if (value.length < 4) throw new Error("A senha precisa ter pelo menos 4 caracteres.");
+  return value;
+}
 export function createUnitRepository(client: SupabaseClient) {
   async function invoke(body: Record<string, unknown>) {
     const { data, error } = await client.functions.invoke("admin-store-users", { body });
@@ -41,8 +45,8 @@ export function createUnitRepository(client: SupabaseClient) {
     return data;
   }
   return {
-    async createStoreAccess(input: StoreAccessInput) { return invoke({ action: "create", ...input, username: normalizeStoreUsername(input.username) }); },
-    async resetStorePassword(profileId: string, password: string) { return invoke({ action: "reset-password", profileId, password }); },
+    async createStoreAccess(input: StoreAccessInput) { return invoke({ action: "create", ...input, password: requireStorePassword(input.password), username: normalizeStoreUsername(input.username) }); },
+    async resetStorePassword(profileId: string, password: string) { return invoke({ action: "reset-password", profileId, password: requireStorePassword(password) }); },
     async setStoreAccessActive(profileId: string, active: boolean) { return invoke({ action: "set-active", profileId, active }); },
     async deleteStoreAccess(profileId: string) { return invoke({ action: "delete", profileId }); },
     async listUnits(): Promise<Unit[]> {
