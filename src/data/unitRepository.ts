@@ -20,6 +20,7 @@ export function createUnitRepository(client: SupabaseClient) {
     async createStoreAccess(input: StoreAccessInput) { return invoke({ action: "create", ...input }); },
     async resetStorePassword(profileId: string, password: string) { return invoke({ action: "reset-password", profileId, password }); },
     async setStoreAccessActive(profileId: string, active: boolean) { return invoke({ action: "set-active", profileId, active }); },
+    async deleteStoreAccess(profileId: string) { return invoke({ action: "delete", profileId }); },
     async listUnits(): Promise<Unit[]> {
       const { data, error } = await client.from("roys_units").select("id,name,active").order("name");
       return ensure(data ?? [], error).map((item) => ({ id: item.id, name: item.name, active: item.active }));

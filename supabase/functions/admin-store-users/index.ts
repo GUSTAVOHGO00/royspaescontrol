@@ -67,6 +67,34 @@ Deno.serve(async (request) => {
     const profileId = String(input.profileId ?? "");
     const { data: target } = await adminClient.from("roys_profiles").select("user_id,unit_id,username,role").eq("user_id", profileId).single();
     if (!target || target.role !== "store") return json({ error: "Acesso da loja não encontrado." }, 404);
+    if (input.action === "delete") {
+      const archivedEmail = "archived-" + target.user_id + "@lojas.roys.internal";
+      const { error: archiveAuthError } = await adminClient.auth.admin.updateUserById(target.user_id, {
+        email: archivedEmail,
+        email_confirm: true,
+        ban_duration: "876000h",
+        app_metadata: { role: "archived_store", previous_unit_id: target.unit_id },
+      });
+      if (archiveAuthError) return json({ error: archiveAuthError.message }, 400);
+
+      const { error: archiveProfileError } = await adminClient.from("roys_profiles").update({
+        display_name: "Acesso arquivado",
+        username: null,
+        unit_id: null,
+        active: false,
+        updated_at: new Date().toISOString(),
+      }).eq("user_id", target.user_id);
+      if (archiveProfileError) return json({ error: archiveProfileError.message }, 400);
+
+      await adminClient.from("roys_audit_events").insert({
+        actor_id: authData.user.id,
+        action: "store_access_archived",
+        entity_type: "profile",
+        entity_id: target.user_id,
+        details: { unitId: target.unit_id, username: target.username, historyPreserved: true },
+      });
+      return json({ deleted: true, historyPreserved: true });
+    }
     if (input.action === "reset-password") {
       const password = requirePassword(input.password);
       const { error } = await adminClient.auth.admin.updateUserById(target.user_id, { password });
