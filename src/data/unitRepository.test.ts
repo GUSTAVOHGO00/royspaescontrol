@@ -9,6 +9,24 @@ describe("unit repository", () => {
     expect(invoke).toHaveBeenCalledWith("admin-store-users", { body: { action: "create", unitId: "unit-1", username: "roys.ilha", password: "SenhaSegura123" } });
   });
 
+  it("normalizes a readable store name into a valid login", async () => {
+    const invoke = vi.fn().mockResolvedValue({ data: { username: "rio-anil" }, error: null });
+    const repository = createUnitRepository({ functions: { invoke } } as never);
+    await repository.createStoreAccess({ unitId: "unit-rio", username: "Rio Anil", password: "SenhaSegura123" });
+    expect(invoke).toHaveBeenCalledWith("admin-store-users", {
+      body: { action: "create", unitId: "unit-rio", username: "rio-anil", password: "SenhaSegura123" },
+    });
+  });
+
+  it("shows the error returned by the protected function", async () => {
+    const invoke = vi.fn().mockResolvedValue({
+      data: null,
+      error: { message: "Edge Function returned a non-2xx status code", context: { json: async () => ({ error: "Login já utilizado." }) } },
+    });
+    const repository = createUnitRepository({ functions: { invoke } } as never);
+    await expect(repository.createStoreAccess({ unitId: "unit-rio", username: "rio-anil", password: "SenhaSegura123" }))
+      .rejects.toThrow("Login já utilizado.");
+  });
   it("invokes protected credential deletion", async () => {
     const invoke = vi.fn().mockResolvedValue({ data: { deleted: true }, error: null });
     const repository = createUnitRepository({ functions: { invoke } } as never);

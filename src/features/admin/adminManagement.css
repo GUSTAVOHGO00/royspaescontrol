@@ -31,3 +31,5 @@
 .access-row .access-delete{background:#fff0f1;color:#c41522}
 .access-row .access-delete:hover{background:#c41522;color:#fff}
 .access-row .access-delete:focus-visible{outline:3px solid rgba(196,21,34,.24);outline-offset:2px}
+.access-login-preview{color:#65737d;font-size:13px;font-weight:600;letter-spacing:0;text-transform:none}
+.access-login-preview strong{color:var(--admin-blue);font-weight:900}

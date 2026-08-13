@@ -11,13 +11,37 @@ function ensure<T>(data: T, error: { message: string } | null): T {
   return data;
 }
 
+export function normalizeStoreUsername(value: string) {
+  return value
+    .normalize("NFD")
+    .trim()
+    .toLowerCase()
+    .replace(/ +/g, "-")
+    .replace(/[^a-z0-9._-]/g, "")
+    .replace(/-+/g, "-")
+    .slice(0, 32);
+}
+
 export function createUnitRepository(client: SupabaseClient) {
   async function invoke(body: Record<string, unknown>) {
     const { data, error } = await client.functions.invoke("admin-store-users", { body });
-    return ensure(data, error);
+    if (error) {
+      let message = error.message;
+      const context = (error as { context?: { json?: () => Promise<{ error?: string }> } }).context;
+      if (context?.json) {
+        try {
+          const payload = await context.json();
+          if (payload?.error) message = payload.error;
+        } catch {
+          // Keep the SDK message when the response body is unavailable.
+        }
+      }
+      throw new Error(message);
+    }
+    return data;
   }
   return {
-    async createStoreAccess(input: StoreAccessInput) { return invoke({ action: "create", ...input }); },
+    async createStoreAccess(input: StoreAccessInput) { return invoke({ action: "create", ...input, username: normalizeStoreUsername(input.username) }); },
     async resetStorePassword(profileId: string, password: string) { return invoke({ action: "reset-password", profileId, password }); },
     async setStoreAccessActive(profileId: string, active: boolean) { return invoke({ action: "set-active", profileId, active }); },
     async deleteStoreAccess(profileId: string) { return invoke({ action: "delete", profileId }); },
