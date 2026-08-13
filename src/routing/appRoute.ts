@@ -5,3 +5,11 @@ export function resolveAppRoute(pathname: string): AppRoute {
   if (pathname.startsWith("/recuperar-senha")) return "recovery";
   return "store";
 }
+
+export function resolveAuthorizedRoute(
+  requested: AppRoute,
+  role: "admin" | "manager" | "store",
+): AppRoute {
+  if (requested === "recovery") return requested;
+  return role === "admin" ? "admin" : "store";
+}
