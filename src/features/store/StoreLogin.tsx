@@ -12,10 +12,10 @@ export function StoreLogin({ onLogin }: { onLogin: (username: string, password: 
       <span>Fechamento operacional</span><h1>Seu turno.<br/><em>Seu fechamento.</em></h1>
       <p>Acesse a unidade, confira os dados e envie o fechamento em poucos passos.</p>
     </section>
-    <section className="store-login-panel"><form onSubmit={submit}>
+    <section className="store-login-panel"><form autoComplete="off" data-lpignore="true" onSubmit={submit}>
       <div className="store-login-icon"><Store /></div><span className="eyebrow">Acesso da loja</span><h2>Vamos começar</h2>
-      <label>Login da loja<input autoComplete="username" autoFocus value={username} onChange={e=>setUsername(e.target.value)} required /></label>
-      <label>Senha<div className="password-wrap"><input autoComplete="current-password" type={show?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} required/><button type="button" aria-label={show?"Ocultar senha":"Mostrar senha"} onClick={()=>setShow(!show)}>{show?<EyeOff/>:<Eye/>}</button></div></label>
+      <label>Login da loja<input autoComplete="off" name="store-unit-login" data-lpignore="true" autoFocus value={username} onChange={e=>setUsername(e.target.value)} required /></label>
+      <label>Senha<div className="password-wrap"><input autoComplete="new-password" name="store-access-code" data-lpignore="true" type={show?"text":"password"} value={password} onChange={e=>setPassword(e.target.value)} required/><button type="button" aria-label={show?"Ocultar senha":"Mostrar senha"} onClick={()=>setShow(!show)}>{show?<EyeOff/>:<Eye/>}</button></div></label>
       {error&&<p role="alert" className="store-login-error">{error}</p>}
       <button className="store-login-submit" disabled={busy} type="submit"><LockKeyhole />{busy?"Entrando…":"Entrar para fechar"}<ArrowRight /></button>
       <a href="/admin">Acesso administrativo</a>

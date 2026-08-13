@@ -10,3 +10,10 @@ it("logs a store in with username and password", async () => {
   fireEvent.click(screen.getByRole("button", { name: /entrar para fechar/i }));
   await waitFor(() => expect(onLogin).toHaveBeenCalledWith("roys.ilha", "SenhaSegura123"));
 });
+
+it("does not offer the shared store credential to the browser password manager", () => {
+  const { container } = render(<StoreLogin onLogin={vi.fn()} />);
+  expect(container.querySelector("form")).toHaveAttribute("autocomplete", "off");
+  expect(screen.getByLabelText(/login da loja/i)).toHaveAttribute("autocomplete", "off");
+  expect(screen.getByLabelText(/^senha$/i)).toHaveAttribute("autocomplete", "new-password");
+});
