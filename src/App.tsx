@@ -640,7 +640,7 @@ export function App({ storeUnit, onStoreSignOut }: { storeUnit?: Unit; onStoreSi
     return (
       <main className="app-shell home-shell">
         <header className="brand-bar">
-          <img src="brand/logo-primary-black.png" alt="Roy's Sandwich Shop" />
+          <img src="brand/logo-primary-transparent.png" alt="Roy's Sandwich Shop" />
           <div className="brand-bar-actions">
             <span>Controle interno · V2</span>
             {onStoreSignOut ? <button className="admin-entry-button" onClick={onStoreSignOut} type="button">Sair da loja</button> : <button className="admin-entry-button" onClick={openAdmin} type="button"><ShieldCheck aria-hidden="true" />Área administrativa</button>}
@@ -725,7 +725,7 @@ export function App({ storeUnit, onStoreSignOut }: { storeUnit?: Unit; onStoreSi
     <main className="app-shell flow-shell">
       <header className="flow-header">
         <button className="icon-button" onClick={goBack} aria-label="Voltar"><ArrowLeft /></button>
-        <img src="brand/logo-primary-black.png" alt="Roy's" />
+        <img src="brand/logo-primary-transparent.png" alt="Roy's" />
         <span>{progress}%</span>
       </header>
       <div className="progress-track"><span style={{ width: `${progress}%` }} /></div>

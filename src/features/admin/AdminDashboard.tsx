@@ -241,7 +241,7 @@ export function AdminDashboard({
           <ArrowLeft aria-hidden="true" />
         </button>
         <div className="admin-sidebar-brand">
-          <img src="brand/logo-primary-black.png" alt="Roy's Sandwich Shop" />
+          <img src="brand/logo-primary-transparent.png" alt="Roy's Sandwich Shop" />
           <div>
             <strong>Roy's Controle</strong>
             <span>Pães & operação</span>

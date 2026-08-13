@@ -8,7 +8,7 @@ export function StoreLogin({ onLogin }: { onLogin: (username: string, password: 
   async function submit(event: FormEvent) { event.preventDefault(); setBusy(true); setError(""); try { await onLogin(username, password); } catch { setError("Login ou senha incorretos. Confira os dados definidos pela administração."); } finally { setBusy(false); } }
   return <main className="store-login-shell">
     <section className="store-login-brand">
-      <img src="/brand/logo-primary-black.png" alt="Roy's Sandwich Shop" />
+      <img className="store-login-logo" src="/brand/logo-primary-transparent.png" alt="Roy's Sandwich Shop" />
       <span>Fechamento operacional</span><h1>Seu turno.<br/><em>Seu fechamento.</em></h1>
       <p>Acesse a unidade, confira os dados e envie o fechamento em poucos passos.</p>
     </section>

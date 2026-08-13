@@ -102,7 +102,7 @@ export function AdminAccess({
           Voltar
         </button>
         <div className="admin-brand-lockup">
-          <img src="brand/logo-primary-black.png" alt="Roy's Sandwich Shop" />
+          <img src="brand/logo-primary-transparent.png" alt="Roy's Sandwich Shop" />
           <div>
             <span>Roy's Controle</span>
             <strong>Administração operacional</strong>
