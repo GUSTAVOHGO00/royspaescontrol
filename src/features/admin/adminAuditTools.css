@@ -1,0 +1,139 @@
+.admin-filter-bar label:nth-child(n + 4) {
+  border-top: 1px solid var(--admin-line);
+}
+
+.admin-list-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-list-actions p {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.admin-list-actions button,
+.admin-record-details > div + button {
+  display: inline-flex;
+  min-height: 40px;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 10px;
+  padding: 0 14px;
+  background: var(--admin-blue);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.admin-list-actions button {
+  justify-self: start;
+}
+
+.admin-list-actions svg,
+.admin-record-details button svg {
+  width: 15px;
+}
+
+.admin-record-details {
+  border-top: 1px solid #eee8df;
+  background: #fbf8f3;
+}
+
+.admin-record-details > summary {
+  padding: 13px 17px;
+  color: #34414b;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.admin-record-details[open] > summary {
+  border-bottom: 1px solid #e7e0d6;
+}
+
+.admin-raw-counts {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 12px 14px;
+}
+
+.admin-raw-counts p {
+  margin: 0;
+  border-right: 1px solid #e7e0d6;
+  padding: 5px 8px;
+}
+
+.admin-raw-counts p:last-child {
+  border-right: 0;
+}
+
+.admin-raw-counts span,
+.admin-raw-counts b {
+  display: block;
+}
+
+.admin-raw-counts span {
+  margin-bottom: 5px;
+  color: #596671;
+  font-size: 8px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.admin-raw-counts b {
+  color: #1d2932;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.admin-raw-report {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 0 14px 12px;
+}
+
+.admin-raw-report p {
+  display: flex;
+  justify-content: space-between;
+  margin: 0;
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: #fff;
+  color: #52606a;
+  font-size: 9px;
+}
+
+.admin-raw-report b {
+  color: var(--admin-blue);
+}
+
+.admin-record-note {
+  margin: 0 14px 12px;
+  border-left: 3px solid var(--admin-yellow);
+  padding: 9px 10px;
+  background: #fff;
+  color: #52606a;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.admin-record-details > button {
+  margin: 0 14px 14px;
+}
+
+@media (max-width: 860px) {
+  .admin-filter-bar label:nth-child(n + 4) {
+    border-top: 1px solid var(--admin-line);
+  }
+
+  .admin-raw-counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

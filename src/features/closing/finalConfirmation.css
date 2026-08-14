@@ -1,0 +1,128 @@
+.definitive-confirmation-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(7, 14, 21, 0.72);
+  backdrop-filter: blur(10px);
+}
+
+.definitive-confirmation {
+  width: min(100%, 560px);
+  padding: clamp(24px, 5vw, 42px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 28px;
+  background: #fffdf9;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.28);
+}
+
+.definitive-confirmation-icon {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  margin-bottom: 22px;
+  place-items: center;
+  border-radius: 18px;
+  background: #fff0d3;
+  color: #d55300;
+}
+
+.definitive-confirmation-icon svg {
+  width: 28px;
+  height: 28px;
+}
+
+.definitive-confirmation-eyebrow {
+  color: #e51f2a;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.definitive-confirmation h2 {
+  margin: 8px 0 14px;
+  color: #101820;
+  font-family: "Arial Narrow", "Roboto Condensed", sans-serif;
+  font-size: clamp(36px, 7vw, 54px);
+  line-height: 0.96;
+  text-transform: uppercase;
+}
+
+.definitive-confirmation > p {
+  margin: 0;
+  color: #46515c;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.definitive-confirmation-warning {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 22px 0 26px;
+  padding: 14px 16px;
+  border: 1px solid #eadfce;
+  border-radius: 14px;
+  background: #f8f3eb;
+  color: #222b34;
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.definitive-confirmation-warning svg {
+  flex: 0 0 auto;
+  width: 21px;
+}
+
+.definitive-confirmation-actions {
+  display: grid;
+  grid-template-columns: 0.9fr 1.3fr;
+  gap: 10px;
+}
+
+.definitive-confirmation-actions button {
+  min-height: 54px;
+  border: 0;
+  border-radius: 13px;
+  padding: 12px 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.definitive-confirmation-actions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.definitive-secondary {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  justify-content: center;
+  background: #e9e4dc;
+  color: #1a232b;
+}
+
+.definitive-secondary svg {
+  width: 17px;
+}
+
+.definitive-primary {
+  background: #e51f2a;
+  color: #fff;
+  box-shadow: 0 12px 26px rgba(229, 31, 42, 0.24);
+}
+
+@media (max-width: 540px) {
+  .definitive-confirmation-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .definitive-primary {
+    grid-row: 1;
+  }
+}

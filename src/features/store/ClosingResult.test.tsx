@@ -1,0 +1,9 @@
+import { fireEvent,render,screen,waitFor } from "@testing-library/react";import{expect,it,vi}from"vitest";import{ClosingResult}from"./ClosingResult";
+it("requires a justification after a locked difference",async()=>{const onJustify=vi.fn().mockResolvedValue({closingId:"1",protocol:"ROY-1",difference:-7,alertLevel:"relevant",submissionState:"complete",submittedAt:"2026-08-11T22:00:00Z"});render(<ClosingResult receipt={{closingId:"1",protocol:"ROY-1",difference:-7,alertLevel:"relevant",submissionState:"awaiting_justification",submittedAt:"2026-08-11T22:00:00Z"}} onJustify={onJustify} onNew={vi.fn()}/>);expect(screen.getByText(/faltaram lançar 7/i)).toBeVisible();fireEvent.change(screen.getByLabelText(/motivo da diferença/i),{target:{value:"count_error"}});fireEvent.change(screen.getByLabelText(/^justificativa$/i),{target:{value:"A contagem final foi revisada e encontramos uma possível falha."}});fireEvent.click(screen.getByRole("button",{name:/enviar justificativa/i}));await waitFor(()=>expect(onJustify).toHaveBeenCalled());expect(await screen.findByText(/fechamento concluído/i)).toBeVisible();});
+
+it("emphasizes the difference value and its operational message", () => {
+  render(<ClosingResult receipt={{closingId:"2",protocol:"ROY-2",difference:10,alertLevel:"relevant",submissionState:"awaiting_justification",submittedAt:"2026-08-13T01:01:00Z"}} onJustify={vi.fn()} onNew={vi.fn()}/>);
+  expect(screen.getByText("10")).toHaveClass("result-difference-value");
+  expect(screen.getByText(/sobraram 10 equivalentes/i)).toHaveClass("result-message");
+  expect(screen.getByText(/sobraram 10 equivalentes/i).closest(".result-alert-panel")).toBeInTheDocument();
+});

@@ -1,0 +1,97 @@
+.employee-privacy-strip article {
+  min-height: 104px;
+}
+
+.employee-submission-list {
+  display: grid;
+  gap: 9px;
+}
+
+.employee-submission-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 13px;
+  align-items: center;
+  border: 1px solid #dfd8cd;
+  border-radius: 15px;
+  padding: 14px 16px;
+  background: #fffdfa;
+  box-shadow: 0 8px 22px rgba(17, 24, 33, 0.04);
+}
+
+.employee-submission-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 12px;
+  background: #dff4eb;
+  color: #16845d;
+}
+
+.employee-submission-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.employee-submission-card b,
+.employee-submission-card small {
+  display: block;
+}
+
+.employee-submission-card b {
+  color: #17212a;
+  font-size: 13px;
+}
+
+.employee-submission-card small {
+  margin-top: 4px;
+  color: #727d85;
+  font-size: 10px;
+}
+
+.employee-submission-state {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  border-radius: 999px;
+  padding: 7px 9px;
+  background: #f0ece5;
+  color: #45525c;
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.employee-submission-state svg {
+  width: 13px;
+  height: 13px;
+}
+
+.employee-result-notice {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 14px;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #e8f4fb;
+  color: #075f96;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.employee-result-notice svg {
+  width: 18px;
+}
+
+@media (max-width: 540px) {
+  .employee-submission-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .employee-submission-state {
+    grid-column: 2;
+    width: fit-content;
+  }
+}

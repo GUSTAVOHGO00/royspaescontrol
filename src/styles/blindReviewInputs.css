@@ -1,0 +1,119 @@
+.blind-review-inputs {
+  border-top: 1px solid #e9e2d8;
+  padding: 18px 20px 20px;
+  background: #f9f6f0;
+}
+
+.blind-review-input-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+  margin-bottom: 11px;
+}
+
+.blind-review-input-heading span {
+  color: #68747d;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.blind-review-input-heading strong {
+  color: #17222b;
+  font-size: 12px;
+}
+
+.blind-review-count-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid #e1d9ce;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.blind-review-count-grid article {
+  min-width: 0;
+  padding: 12px;
+  border-right: 1px solid #ece5db;
+}
+
+.blind-review-count-grid article:last-child {
+  border-right: 0;
+}
+
+.blind-review-count-grid b,
+.blind-review-count-grid span {
+  display: block;
+}
+
+.blind-review-count-grid b {
+  overflow: hidden;
+  margin-bottom: 8px;
+  color: #25323c;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blind-review-count-grid span {
+  color: #73808a;
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+.blind-review-count-grid span strong {
+  display: inline;
+  color: #111b24;
+  font-size: 10px;
+}
+
+.blind-review-input-heading.report-heading {
+  margin-top: 18px;
+}
+
+.blind-review-report-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.blind-review-report-list p {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  margin: 0;
+  border: 1px solid #e5ded4;
+  border-radius: 10px;
+  padding: 9px 11px;
+  background: #fff;
+}
+
+.blind-review-report-list span {
+  color: #52606a;
+  font-size: 10px;
+}
+
+.blind-review-report-list strong {
+  color: #0d71b9;
+  font-size: 13px;
+}
+
+@media (max-width: 700px) {
+  .blind-review-count-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .blind-review-count-grid article {
+    border-bottom: 1px solid #ece5db;
+  }
+}
+
+@media (max-width: 460px) {
+  .blind-review-report-list {
+    grid-template-columns: 1fr;
+  }
+}

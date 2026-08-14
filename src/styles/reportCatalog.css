@@ -1,0 +1,87 @@
+.report-sections {
+  display: grid;
+  gap: 18px;
+}
+
+.report-group {
+  overflow: hidden;
+  border: 1px solid #ded7cd;
+  border-radius: 18px;
+  background: #fffdfa;
+  box-shadow: 0 12px 32px rgba(17, 24, 33, 0.06);
+}
+
+.report-group-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.8fr);
+  gap: 14px;
+  align-items: end;
+  padding: 18px;
+  border-bottom: 1px solid #e9e2d8;
+}
+
+.report-group-heading > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.report-group-heading span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 8px;
+  background: #0d1720;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.report-group-heading h2 {
+  margin: 0;
+  color: #111820;
+  font-family: "Arial Narrow", "Roboto Condensed", sans-serif;
+  font-size: clamp(19px, 4vw, 25px);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.report-group-heading p {
+  margin: 0;
+  color: #68717b;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.report-group-essential .report-group-heading {
+  border-top: 5px solid #ffc426;
+}
+
+.report-group-offers .report-group-heading {
+  border-top: 5px solid #ef2331;
+}
+
+.report-group-regular .report-group-heading {
+  border-top: 5px solid #0d71b9;
+}
+
+.report-group .report-list {
+  gap: 0;
+}
+
+.report-group .report-list label {
+  border-radius: 0;
+  background: transparent;
+}
+
+.report-group .report-list label + label {
+  border-top: 1px solid #eee7dd;
+}
+
+@media (max-width: 560px) {
+  .report-group-heading {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+}
