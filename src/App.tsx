@@ -60,7 +60,8 @@ import "./styles/employeePrivacy.css";
 import "./styles/global.css";
 import "./styles/ocr.css";
 import "./styles/reportCatalog.css";
-import type { Employee, Unit } from "./data/unitRepository";
+import { unitRepository, type Employee, type Unit } from "./data/unitRepository";
+import { resolveClosingEmployeeId } from "./data/resolveClosingEmployee";
 import { EmployeePicker } from "./features/store/EmployeePicker";
 import { ClosingResult } from "./features/store/ClosingResult";
 import { cloudClosingRepository, type ClosingReceipt } from "./data/cloudClosingRepository";
@@ -180,6 +181,7 @@ export function App({ storeUnit, onStoreSignOut }: { storeUnit?: Unit; onStoreSi
           setCorrectsId(draft.correctsId);
           setDraftStep(draft.step);
           setResponsible(draft.responsible);
+          setEmployeeId(draft.employeeId ?? "");
           setUnit(draft.unit);
           setShift(draft.shift);
           setDate(draft.date);
@@ -219,6 +221,7 @@ export function App({ storeUnit, onStoreSignOut }: { storeUnit?: Unit; onStoreSi
         correctsId,
         step,
         responsible,
+        employeeId,
         unit,
         shift,
         date,
@@ -257,6 +260,7 @@ export function App({ storeUnit, onStoreSignOut }: { storeUnit?: Unit; onStoreSi
     report,
     reportMode,
     responsible,
+    employeeId,
     revision,
     reviewConfirmed,
     shift,
@@ -557,12 +561,19 @@ export function App({ storeUnit, onStoreSignOut }: { storeUnit?: Unit; onStoreSi
 
     try {
       if (storeUnit && !correctsId) {
+        const resolvedEmployeeId = await resolveClosingEmployeeId({
+          employeeId,
+          responsible,
+          unitId: storeUnit.id,
+          listActiveEmployees: unitRepository.listActiveEmployees,
+        });
+        if (resolvedEmployeeId !== employeeId) setEmployeeId(resolvedEmployeeId);
         let documentPath: string | undefined;
         if (sourceDocument) {
           const file = new File([sourceDocument.blob], sourceDocument.name, { type: sourceDocument.type });
           documentPath = await cloudClosingRepository.uploadEvidence(storeUnit.id, closingId, file);
         }
-        const receipt = await cloudClosingRepository.submitClosing({ idempotencyKey: closingId, employeeId, businessDate: date, shift, counts, report, reportMode, parsedItems, documentPath, documentMetadata: sourceDocument ? { name: sourceDocument.name, type: sourceDocument.type, size: sourceDocument.size, source: sourceDocument.source, warnings: sourceDocument.warnings } : undefined, clientLocalAt: new Date().toISOString() });
+        const receipt = await cloudClosingRepository.submitClosing({ idempotencyKey: closingId, employeeId: resolvedEmployeeId, businessDate: date, shift, counts, report, reportMode, parsedItems, documentPath, documentMetadata: sourceDocument ? { name: sourceDocument.name, type: sourceDocument.type, size: sourceDocument.size, source: sourceDocument.source, warnings: sourceDocument.warnings } : undefined, clientLocalAt: new Date().toISOString() });
         await closingRepository.clearDraft();
         setCloudReceipt(receipt); setHasDraft(false); setShowFinalConfirmation(false); setStep("done"); return;
       }
@@ -755,7 +766,7 @@ export function App({ storeUnit, onStoreSignOut }: { storeUnit?: Unit; onStoreSi
             </div>
             {!storeUnit && <label>Unidade<select value={unit} onChange={(event) => setUnit(event.target.value)}><option>Shopping da Ilha</option><option>Shopping Rio Anil</option></select></label>}
           </div>
-          <button className="primary-action sticky-action" disabled={!responsible.trim()} onClick={() => setStep("physical")}>
+          <button className="primary-action sticky-action" disabled={!responsible.trim() || Boolean(storeUnit && !employeeId)} onClick={() => setStep("physical")}>
             Continuar <ArrowRight />
           </button>
         </section>

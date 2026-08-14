@@ -29,6 +29,7 @@ export interface ClosingDraft {
   correctsId?: string;
   step: ClosingStep;
   responsible: string;
+  employeeId?: string;
   unit: string;
   shift: string;
   date: string;
